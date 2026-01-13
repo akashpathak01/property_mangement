@@ -61,7 +61,7 @@ export const TenantLease = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Monthly Rent</p>
-                                    <h4 className="text-2xl font-black text-slate-800">₹{lease.monthlyRent.toLocaleString()}</h4>
+                                    <h4 className="text-2xl font-black text-slate-800">${lease.monthlyRent.toLocaleString('en-CA')}</h4>
                                     <p className="text-sm text-slate-500 font-medium">Due on 1st of every month</p>
                                 </div>
                             </div>
@@ -87,7 +87,7 @@ export const TenantLease = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Security Deposit</p>
-                                    <h4 className="text-lg font-bold text-slate-800">₹{lease.deposit.toLocaleString()}</h4>
+                                    <h4 className="text-lg font-bold text-slate-800">${lease.deposit.toLocaleString('en-CA')}</h4>
                                     <p className="text-sm text-slate-500 font-medium">Held in Escrow</p>
                                 </div>
                             </div>

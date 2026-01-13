@@ -23,7 +23,7 @@ export const TenantInvoices = () => {
                 // Controller sends number. Let's format locally if desired or rely on usage.
                 setInvoices(res.data.map(inv => ({
                     ...inv,
-                    amount: `$${inv.amount.toLocaleString()}` // Simple formatting
+                    amount: `$${inv.amount.toLocaleString('en-CA')}` // Simple formatting
                 })));
             } catch (e) { console.error(e); }
         };

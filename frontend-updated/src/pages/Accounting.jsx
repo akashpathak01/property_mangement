@@ -59,15 +59,15 @@ export const Accounting = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <Card className="p-4 bg-slate-50 border-slate-200">
                     <div className="text-sm text-slate-500 mb-1">Total Receivables</div>
-                    <div className="text-2xl font-bold text-slate-900">${totalReceivables.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-slate-900">${totalReceivables.toLocaleString('en-CA')}</div>
                 </Card>
                 <Card className="p-4 bg-slate-50 border-slate-200">
                     <div className="text-sm text-slate-500 mb-1">YTD Income</div>
-                    <div className="text-2xl font-bold text-green-600">${ytdIncome.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-green-600">${ytdIncome.toLocaleString('en-CA')}</div>
                 </Card>
                 <Card className="p-4 bg-slate-50 border-slate-200">
                     <div className="text-sm text-slate-500 mb-1">Expenses</div>
-                    <div className="text-2xl font-bold text-slate-700">${expenses.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-slate-700">${expenses.toLocaleString('en-CA')}</div>
                 </Card>
             </div>
 

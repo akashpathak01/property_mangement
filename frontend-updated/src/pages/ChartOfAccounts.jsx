@@ -105,7 +105,7 @@ export const ChartOfAccounts = () => {
               </div>
 
               <p className="text-[13px] text-slate-500 mt-1.5">{acc.type}</p>
-              <h2 className="text-[22px] font-bold my-2.5 text-slate-900">₹ {Number(acc.balance).toLocaleString()}</h2>
+              <h2 className="text-[22px] font-bold my-2.5 text-slate-900">$ {Number(acc.balance).toLocaleString('en-CA')}</h2>
 
               {/* MINI TREND BAR */}
               <div className="flex gap-1 items-end h-[30px]">

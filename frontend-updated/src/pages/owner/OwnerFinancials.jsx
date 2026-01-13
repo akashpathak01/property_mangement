@@ -15,10 +15,10 @@ import api from '../../api/client';
 
 export const OwnerFinancials = () => {
     const [financialStats, setFinancialStats] = React.useState([
-        { label: 'Rent Collected (MTD)', value: '₹ 0', icon: CircleDollarSign, color: 'text-emerald-600', trend: '...', trendUp: true },
-        { label: 'Service Fees (MTD)', value: '₹ 0', icon: CircleDollarSign, color: 'text-indigo-600', trend: '...', trendUp: true },
-        { label: 'Outstanding Dues', value: '₹ 0', icon: Clock, color: 'text-rose-600', trend: '...', trendUp: true },
-        { label: 'Net Earnings (MTD)', value: '₹ 0', icon: CheckCircle2, color: 'text-violet-600', trend: '...', trendUp: true },
+        { label: 'Rent Collected (MTD)', value: '$ 0', icon: CircleDollarSign, color: 'text-emerald-600', trend: '...', trendUp: true },
+        { label: 'Service Fees (MTD)', value: '$ 0', icon: CircleDollarSign, color: 'text-indigo-600', trend: '...', trendUp: true },
+        { label: 'Outstanding Dues', value: '$ 0', icon: Clock, color: 'text-rose-600', trend: '...', trendUp: true },
+        { label: 'Net Earnings (MTD)', value: '$ 0', icon: CheckCircle2, color: 'text-violet-600', trend: '...', trendUp: true },
     ]);
     const [transactions, setTransactions] = React.useState([]);
 
@@ -29,10 +29,10 @@ export const OwnerFinancials = () => {
                 const { collected, transactions: txns } = res.data;
 
                 setFinancialStats([
-                    { label: 'Rent Collected (MTD)', value: `₹ ${collected.toLocaleString()}`, icon: CircleDollarSign, color: 'text-emerald-600', trend: '+4.2%', trendUp: true },
-                    { label: 'Service Fees (MTD)', value: '₹ 0', icon: CircleDollarSign, color: 'text-indigo-600', trend: '+1.5%', trendUp: true },
-                    { label: 'Outstanding Dues', value: '₹ 0', icon: Clock, color: 'text-rose-600', trend: 'Unknown', trendUp: true },
-                    { label: 'Net Earnings (MTD)', value: `₹ ${collected.toLocaleString()}`, icon: CheckCircle2, color: 'text-violet-600', trend: '+3.8%', trendUp: true },
+                    { label: 'Rent Collected (MTD)', value: `$ ${collected.toLocaleString('en-CA')}`, icon: CircleDollarSign, color: 'text-emerald-600', trend: '+4.2%', trendUp: true },
+                    { label: 'Service Fees (MTD)', value: '$ 0', icon: CircleDollarSign, color: 'text-indigo-600', trend: '+1.5%', trendUp: true },
+                    { label: 'Outstanding Dues', value: '$ 0', icon: Clock, color: 'text-rose-600', trend: 'Unknown', trendUp: true },
+                    { label: 'Net Earnings (MTD)', value: `$ ${collected.toLocaleString('en-CA')}`, icon: CheckCircle2, color: 'text-violet-600', trend: '+3.8%', trendUp: true },
                 ]);
                 setTransactions(txns);
             } catch (e) {
@@ -113,7 +113,7 @@ export const OwnerFinancials = () => {
                                         <td className="px-8 py-5 text-sm font-black text-slate-700 italic">{txn.property}</td>
                                         <td className="px-8 py-5 text-xs font-bold text-slate-400">{txn.date}</td>
                                         <td className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">{txn.type}</td>
-                                        <td className="px-8 py-5 text-sm font-black text-slate-800 text-right italic font-mono">₹{txn.amount.toLocaleString()}</td>
+                                        <td className="px-8 py-5 text-sm font-black text-slate-800 text-right italic font-mono">${txn.amount.toLocaleString('en-CA')}</td>
                                         <td className="px-8 py-5 text-center">
                                             <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${txn.status === 'Paid'
                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100'

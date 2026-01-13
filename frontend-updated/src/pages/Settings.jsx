@@ -9,7 +9,7 @@ const Settings = () => {
     autoInvoices: true,
     twoFactor: false,
     companyName: 'My Property Management',
-    currency: 'INR (₹)',
+    currency: 'CAD ($)',
     paymentCycle: 'Monthly',
     lateFee: 5
   });
@@ -115,6 +115,7 @@ const Settings = () => {
                 onChange={(e) => saveSetting('currency', e.target.value)}
                 className="h-[38px] px-2.5 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white font-medium text-slate-900"
               >
+                <option>CAD ($)</option>
                 <option>INR (₹)</option>
                 <option>USD ($)</option>
                 <option>AED (د.إ)</option>

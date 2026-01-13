@@ -70,7 +70,7 @@ export const OwnerProperties = () => {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-white/70 text-[10px] font-black uppercase tracking-widest mb-1">Monthly Revenue</p>
-                                        <p className="text-white text-lg font-black tracking-tight italic">₹ {prop.revenue.toLocaleString()}</p>
+                                        <p className="text-white text-lg font-black tracking-tight italic">$ {prop.revenue.toLocaleString('en-CA')}</p>
                                     </div>
                                 </div>
                             </div>
