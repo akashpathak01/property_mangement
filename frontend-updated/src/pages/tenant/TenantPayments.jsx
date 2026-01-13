@@ -3,19 +3,68 @@ import { TenantLayout } from '../../layouts/TenantLayout';
 import { CreditCard, Wallet, Banknote, CheckCircle, ArrowRight, ShieldCheck, X } from 'lucide-react';
 import { Button } from '../../components/Button';
 
+import api from '../../api/client';
+
 export const TenantPayments = () => {
     const [selectedMethod, setSelectedMethod] = useState('card');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    const handlePayment = (e) => {
+    const [invoiceToPay, setInvoiceToPay] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    React.useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                const res = await api.get('/tenant/invoices');
+                // Find first due invoice
+                const due = res.data.find(inv => inv.status === 'Due' || inv.status === 'Overdue');
+                if (due) setInvoiceToPay(due);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchInvoices();
+    }, []);
+
+    const handlePayment = async (e) => {
         e.preventDefault();
+        if (!invoiceToPay) return;
+
         setIsProcessing(true);
-        setTimeout(() => {
+        try {
+            await api.post('/tenant/pay', {
+                invoiceId: invoiceToPay.dbId, // Backend needs DB ID
+                amount: invoiceToPay.amount,
+                paymentMethod: selectedMethod
+            });
+
             setIsProcessing(false);
             setShowSuccess(true);
-        }, 2000);
+        } catch (error) {
+            console.error(error);
+            setIsProcessing(false);
+            alert('Payment failed. Please try again.');
+        }
     };
+
+    if (isLoading) return <div className="p-10 text-center">Loading payment details...</div>;
+
+    if (!invoiceToPay && !showSuccess) {
+        return (
+            <TenantLayout title="Pay Rent">
+                <div className="p-10 text-center bg-white rounded-3xl border border-slate-100 shadow-sm">
+                    <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle size={40} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800">No Pending Dues</h3>
+                    <p className="text-slate-500 mt-2">You are all caught up! No rent is due at this time.</p>
+                </div>
+            </TenantLayout>
+        );
+    }
 
     return (
         <TenantLayout title="Pay Rent">
@@ -39,8 +88,8 @@ export const TenantPayments = () => {
                                         key={method.id}
                                         onClick={() => setSelectedMethod(method.id)}
                                         className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left ${selectedMethod === method.id
-                                                ? 'border-primary-600 bg-primary-50/30'
-                                                : 'border-slate-100 hover:border-primary-200'
+                                            ? 'border-primary-600 bg-primary-50/30'
+                                            : 'border-slate-100 hover:border-primary-200'
                                             }`}
                                     >
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${selectedMethod === method.id ? 'bg-primary-600 text-white' : 'bg-slate-50 text-slate-400'
@@ -75,7 +124,7 @@ export const TenantPayments = () => {
                                         </>
                                     ) : (
                                         <>
-                                            Pay $1,200.00
+                                            Pay ${invoiceToPay?.amount?.toLocaleString()}
                                             <ArrowRight size={20} />
                                         </>
                                     )}
@@ -95,8 +144,8 @@ export const TenantPayments = () => {
 
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center text-slate-400 font-medium text-sm">
-                                    <span>Rent (Feb 2026)</span>
-                                    <span className="text-white font-bold tracking-tight">$1,200.00</span>
+                                    <span>Rent ({invoiceToPay?.month})</span>
+                                    <span className="text-white font-bold tracking-tight">${invoiceToPay?.amount?.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-slate-400 font-medium text-sm">
                                     <span>Processing Fee</span>
@@ -107,7 +156,7 @@ export const TenantPayments = () => {
                             <div className="pt-8 border-t border-slate-800 space-y-1">
                                 <p className="text-xs text-slate-500 font-black uppercase tracking-widest">Total to Pay</p>
                                 <div className="flex justify-between items-end">
-                                    <span className="text-4xl font-black tracking-tighter">$1,200.00</span>
+                                    <span className="text-4xl font-black tracking-tighter">${invoiceToPay?.amount?.toLocaleString()}</span>
                                     <span className="text-xs font-bold text-slate-500 mb-2 underline decoration-slate-700 underline-offset-4">USD</span>
                                 </div>
                             </div>
@@ -117,7 +166,7 @@ export const TenantPayments = () => {
                                     <CheckCircle size={20} className="text-emerald-500" />
                                 </div>
                                 <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                                    Your payment for February 2026 will be processed immediately.
+                                    Your payment for {invoiceToPay?.month} will be processed immediately.
                                 </p>
                             </div>
                         </section>
@@ -134,19 +183,19 @@ export const TenantPayments = () => {
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-2xl font-black text-slate-800">Payment Successful!</h3>
-                            <p className="text-slate-500 font-medium">Your rent for February 2026 has been successfully paid.</p>
+                            <p className="text-slate-500 font-medium">Your rent for {invoiceToPay?.month} has been successfully paid.</p>
                         </div>
                         <div className="bg-slate-50 rounded-2xl p-4 text-left border border-slate-100">
                             <div className="flex justify-between text-xs font-bold py-1">
                                 <span className="text-slate-400 uppercase">Receipt #</span>
-                                <span className="text-slate-700">RCP-99281-Z</span>
+                                <span className="text-slate-700">RCP-{Math.floor(Math.random() * 100000)}</span>
                             </div>
                             <div className="flex justify-between text-xs font-bold py-1">
                                 <span className="text-slate-400 uppercase">Method</span>
                                 <span className="text-slate-700 uppercase">{selectedMethod}</span>
                             </div>
                         </div>
-                        <Button variant="primary" className="w-full rounded-2x h-12 h-auto font-bold mt-2" onClick={() => setShowSuccess(false)}>
+                        <Button variant="primary" className="w-full rounded-2x h-12 h-auto font-bold mt-2" onClick={() => window.location.reload()}>
                             Great, thanks!
                         </Button>
                     </div>
