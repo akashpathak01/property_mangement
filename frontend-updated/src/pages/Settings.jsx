@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
+import GoogleTranslate from '../components/GoogleTranslate';
 import api from '../api/client';
 
 const Settings = () => {
@@ -83,6 +84,17 @@ const Settings = () => {
 
         {/* SETTINGS SECTIONS */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+
+          {/* LANGUAGE SETTINGS */}
+          <div className="bg-white p-[22px] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.06)]">
+            <h3 className="mb-4 text-base font-semibold text-slate-800">Language Settings</h3>
+            <div className="flex flex-col gap-1.5 text-[13px] mb-3.5 text-slate-700">
+               <span className="mb-2">Select Application Language</span>
+               <div className="relative z-10">
+                 <GoogleTranslate />
+               </div>
+            </div>
+          </div>
 
           {/* GENERAL */}
           <div className="bg-white p-[22px] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.06)]">

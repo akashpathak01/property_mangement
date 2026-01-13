@@ -81,7 +81,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* 🔒 PROTECTED AREA */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
           {/* DASHBOARD */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/vacancy" element={<VacancyDashboard />} />
@@ -128,7 +128,7 @@ function App() {
           <Route path="/communication" element={<Communication />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/settings" element={<Settings />} />
-        </Route>
+        {/* </Route> */}
 
         {/* 🏢 TENANT PORTAL */}
         <Route path="/tenant/login" element={<TenantLogin />} />
