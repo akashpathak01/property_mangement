@@ -42,6 +42,14 @@ router.post('/invoices', invoiceController.createInvoice);
 router.put('/invoices/:id', invoiceController.updateInvoice);
 router.delete('/invoices/:id', invoiceController.deleteInvoice);
 
+const paymentController = require('./payment.controller');
+router.get('/payments', paymentController.getReceivedPayments);
+router.get('/outstanding-dues', paymentController.getOutstandingDues);
+
+const refundController = require('./refund.controller');
+router.get('/refunds', refundController.getRefunds);
+router.post('/refunds', refundController.createRefund);
+
 router.get('/leases', leaseController.getLeaseHistory);
 router.delete('/leases/:id', leaseController.deleteLease);
 router.put('/leases/:id', leaseController.updateLease);

@@ -1,31 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
 import { Eye, RotateCcw, X } from 'lucide-react';
 import { Button } from '../components/Button';
+import api from '../api/client';
 
 const PaymentsReceived = () => {
-  const [payments] = useState([
-    {
-      id: 'INV-301-APR',
-      tenant: 'John Doe',
-      unit: 'Unit 301 - Bedroom 1',
-      type: 'Bedroom',
-      amount: 18000,
-      method: 'Bank Transfer',
-      date: '03 Apr 2026',
-      status: 'Paid',
-    },
-    {
-      id: 'INV-202-APR',
-      tenant: 'ABC Pvt Ltd',
-      unit: 'Unit 202',
-      type: 'Full Unit',
-      amount: 50000,
-      method: 'UPI',
-      date: '02 Apr 2026',
-      status: 'Paid',
-    },
-  ]);
+  const [payments, setPayments] = useState([]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      const response = await api.get('/admin/payments');
+      setPayments(response.data);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+    }
+  };
 
   const [selectedPayment, setSelectedPayment] = useState(null);
 

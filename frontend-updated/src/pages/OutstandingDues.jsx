@@ -1,31 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
 import { Eye, CreditCard, X } from 'lucide-react';
 import { Button } from '../components/Button';
+import api from '../api/client';
 
 const OutstandingDues = () => {
-  const [dues] = useState([
-    {
-      invoice: 'INV-301-BR2-APR',
-      tenant: 'Aman Verma',
-      unit: 'Unit 301 – Bedroom 2',
-      leaseType: 'Bedroom',
-      amount: 16000,
-      dueDate: '05 Apr 2026',
-      daysOverdue: 6,
-      status: 'Overdue',
-    },
-    {
-      invoice: 'INV-202-APR',
-      tenant: 'XYZ Logistics Pvt Ltd',
-      unit: 'Unit 202',
-      leaseType: 'Full Unit',
-      amount: 50000,
-      dueDate: '10 Apr 2026',
-      daysOverdue: 0,
-      status: 'Pending',
-    },
-  ]);
+  const [dues, setDues] = useState([]);
+
+  useEffect(() => {
+    fetchDues();
+  }, []);
+
+  const fetchDues = async () => {
+    try {
+      const response = await api.get('/admin/outstanding-dues');
+      setDues(response.data);
+    } catch (error) {
+      console.error('Error fetching outstanding dues:', error);
+    }
+  };
 
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
@@ -60,8 +53,8 @@ const OutstandingDues = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{d.dueDate}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${d.status === 'Overdue'
-                        ? 'bg-red-50 text-red-700 border-red-100'
-                        : 'bg-orange-50 text-orange-700 border-orange-100'
+                      ? 'bg-red-50 text-red-700 border-red-100'
+                      : 'bg-orange-50 text-orange-700 border-orange-100'
                       }`}>
                       {d.status}
                       {d.daysOverdue > 0 && ` (${d.daysOverdue} days)`}

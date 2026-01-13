@@ -1,41 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
 import { Eye, X } from 'lucide-react';
 import { Button } from '../components/Button';
+import api from '../api/client';
 
 const RefundsAdjustments = () => {
-  const [records] = useState([
-    {
-      id: 'RA-001',
-      type: 'Refund',
-      reason: 'Security Deposit Refund',
-      tenant: 'John Doe',
-      unit: 'Unit 301',
-      amount: 25000,
-      date: '15 Apr 2026',
-      status: 'Completed',
-    },
-    {
-      id: 'RA-002',
-      type: 'Adjustment',
-      reason: 'Rent Discount',
-      tenant: 'Aman Verma',
-      unit: 'Unit 301 – Bedroom 2',
-      amount: -2000,
-      date: '18 Apr 2026',
-      status: 'Applied',
-    },
-    {
-      id: 'RA-003',
-      type: 'Refund',
-      reason: 'Overpayment Refund',
-      tenant: 'XYZ Logistics Pvt Ltd',
-      unit: 'Unit 202',
-      amount: 5000,
-      date: '20 Apr 2026',
-      status: 'Pending',
-    },
-  ]);
+  const [records, setRecords] = useState([]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, []);
+
+  const fetchRecords = async () => {
+    try {
+      const response = await api.get('/admin/refunds');
+      setRecords(response.data);
+    } catch (error) {
+      console.error('Error fetching refunds:', error);
+    }
+  };
 
   const [selected, setSelected] = useState(null);
 
@@ -65,8 +48,8 @@ const RefundsAdjustments = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700 font-mono">{r.id}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${r.type === 'Refund'
-                        ? 'bg-cyan-50 text-cyan-700 border-cyan-100'
-                        : 'bg-yellow-50 text-yellow-700 border-yellow-100'
+                      ? 'bg-cyan-50 text-cyan-700 border-cyan-100'
+                      : 'bg-yellow-50 text-yellow-700 border-yellow-100'
                       }`}>
                       {r.type}
                     </span>
@@ -80,8 +63,8 @@ const RefundsAdjustments = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{r.date}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${r.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                        r.status === 'Applied' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-                          'bg-orange-50 text-orange-700 border-orange-100' // Pending
+                      r.status === 'Applied' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                        'bg-orange-50 text-orange-700 border-orange-100' // Pending
                       }`}>
                       {r.status}
                     </span>
@@ -118,8 +101,8 @@ const RefundsAdjustments = () => {
                 <div className="flex flex-col"><label className="text-xs text-slate-500 mb-1">Status</label><span className="text-sm font-medium text-slate-900">{selected.status}</span></div>
 
                 <div className={`col-span-2 mt-2 p-4 rounded-lg text-center text-xl font-bold border ${selected.amount < 0
-                    ? 'bg-yellow-50 text-yellow-800 border-yellow-100'
-                    : 'bg-cyan-50 text-cyan-800 border-cyan-100'
+                  ? 'bg-yellow-50 text-yellow-800 border-yellow-100'
+                  : 'bg-cyan-50 text-cyan-800 border-cyan-100'
                   }`}>
                   ₹{Math.abs(selected.amount)}
                 </div>

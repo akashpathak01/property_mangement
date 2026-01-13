@@ -145,6 +145,8 @@ model Invoice {
   serviceFees Decimal   @default(0.0)
   status      String    @default("draft")
   paidAt      DateTime?
+  paymentMethod String?
+  dueDate     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -195,6 +197,23 @@ model SystemSetting {
   id        Int      @id @default(autoincrement())
   key       String   @unique
   value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefundAdjustment {
+  id        Int      @id @default(autoincrement())
+  requestId String   @unique // RA-001 etc
+  type      String   // Refund, Adjustment
+  reason    String
+  tenantId  Int
+  tenant    User     @relation(fields: [tenantId], references: [id])
+  unitId    Int
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  amount    Decimal
+  date      DateTime
+  status    String   @default("Pending") // Completed, Applied, Pending
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
