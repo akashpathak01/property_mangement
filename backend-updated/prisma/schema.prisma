@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  TENANT
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  name     String?
+  role     Role    @default(TENANT)
+  phone    String?
+  type     String? @default("Individual")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  leases        Lease[]        @relation("TenantLeases")
+  documents     Document[]
+  insurances    Insurance[]
+  tickets       Ticket[]
+  invoices      Invoice[]
+
+  properties Property[] @relation("OwnerProperties")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Property {
+  id               Int               @id @default(autoincrement())
+  name             String
+  address          String
+  status           String            @default("Active")
+  ownerId          Int?
+  owner            User?             @relation("OwnerProperties", fields: [ownerId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  units            Unit[]
+  maintenanceTasks MaintenanceTask[]
+}
+
+enum RentalMode {
+  FULL_UNIT
+  BEDROOM_WISE
+}
+
+model Unit {
+  id          Int        @id @default(autoincrement())
+  name        String
+  propertyId  Int
+  property    Property   @relation(fields: [propertyId], references: [id])
+  status      String     @default("Vacant")
+  rentalMode  RentalMode @default(FULL_UNIT)
+  bedrooms    Int        @default(1)
+  rentAmount  Decimal    @default(0.0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  leases      Lease[]
+  invoices    Invoice[]
+}
+
+model Lease {
+  id          Int       @id @default(autoincrement())
+  unitId      Int
+  unit        Unit      @relation(fields: [unitId], references: [id])
+  tenantId    Int
+  tenant      User      @relation("TenantLeases", fields: [tenantId], references: [id])
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String    @default("Active")
+  monthlyRent     Decimal?
+  securityDeposit Decimal?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Insurance {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  provider     String
+  policyNumber String
+  startDate    DateTime
+  endDate      DateTime
+  documentUrl  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Document {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  name       String
+  type       String
+  expiryDate DateTime?
+  fileUrl    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Ticket {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
+  subject        String
+  description    String
+  priority       String   @default("Low")
+  status         String   @default("Open")
+  propertyId     Int?
+  unitId         Int?
+  attachmentUrls String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Invoice {
+  id          Int       @id @default(autoincrement())
+  invoiceNo   String    @unique
+  tenantId    Int
+  tenant      User      @relation(fields: [tenantId], references: [id])
+  unitId      Int
+  unit        Unit      @relation(fields: [unitId], references: [id])
+  month       String
+  amount      Decimal
+  rent        Decimal
+  serviceFees Decimal   @default(0.0)
+  status      String    @default("draft")
+  paidAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MaintenanceTask {
+  id         Int       @id @default(autoincrement())
+  name       String
+  propertyId Int?
+  property   Property? @relation(fields: [propertyId], references: [id])
+  type       String
+  frequency  String
+  dueDate    DateTime
+  vendor     String
+  status     String    @default("Upcoming")
+  notes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  type        String
+  amount      Decimal
+  balance     Decimal  @default(0.0)
+  status      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Communication {
+  id        Int     @id @default(autoincrement())
+  type      String // Email, SMS
+  recipient String // All Tenants, John Doe, etc.
+  subject   String?
+  message   String
+  status    String  @default("Sent")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
