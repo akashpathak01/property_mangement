@@ -10,6 +10,7 @@ router.use(authorize('OWNER'));
 // const financialController = require('./financial.controller'); removed
 
 router.get('/dashboard/stats', ownerController.getOwnerDashboardStats);
+router.get('/dashboard/financial-pulse', ownerController.getOwnerFinancialPulse);
 router.get('/properties', ownerController.getOwnerProperties);
 router.get('/financials', ownerController.getOwnerFinancials);
 router.get('/reports', ownerController.getOwnerReports);

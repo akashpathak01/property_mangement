@@ -45,30 +45,30 @@ import { QuickBooksSettings } from "./pages/QuickBooksSettings";
 import Reports from "./pages/Reports";
 import { Maintenance } from "./pages/Maintenance";
 import { Tickets } from "./pages/Tickets";
-import { Communication } from "./pages/Communication"; // Added
+import Communication from "./pages/Communication"; // Added
 import Settings from "./pages/Settings";
 import { Owners } from "./pages/Owners";
 
 /* TENANT PORTAL */
 import { TenantProtectedRoute } from "./components/TenantProtectedRoute";
 import {
-  TenantLogin,
   TenantDashboard,
   TenantLease,
   TenantInvoices,
   TenantPayments,
   TenantDocuments,
   TenantInsurance,
-  TenantTickets
+  TenantTickets,
+  TenantChat // Added
 } from "./pages/tenant";
 
 /* OWNER PORTAL */
 import { OwnerProtectedRoute } from "./components/OwnerProtectedRoute";
-import { OwnerLogin } from "./pages/owner/OwnerLogin";
 import { OwnerDashboard } from "./pages/owner/OwnerDashboard";
 import { OwnerProperties } from "./pages/owner/OwnerProperties";
 import { OwnerFinancials } from "./pages/owner/OwnerFinancials";
 import { OwnerReports } from "./pages/owner/OwnerReports";
+import { OwnerChat } from "./pages/owner/OwnerChat"; // Added
 
 function App() {
   return (
@@ -131,7 +131,7 @@ function App() {
         </Route>
 
         {/* 🏢 TENANT PORTAL */}
-        <Route path="/tenant/login" element={<TenantLogin />} />
+        <Route path="/tenant/login" element={<Navigate to="/login" replace />} />
         <Route element={<TenantProtectedRoute />}>
           <Route path="/tenant/dashboard" element={<TenantDashboard />} />
           <Route path="/tenant/lease" element={<TenantLease />} />
@@ -140,15 +140,17 @@ function App() {
           <Route path="/tenant/documents" element={<TenantDocuments />} />
           <Route path="/tenant/insurance" element={<TenantInsurance />} />
           <Route path="/tenant/tickets" element={<TenantTickets />} />
+          <Route path="/tenant/communication" element={<TenantChat />} /> {/* Added */}
         </Route>
 
         {/* 🗝️ OWNER PORTAL */}
-        <Route path="/owner/login" element={<OwnerLogin />} />
+        <Route path="/owner/login" element={<Navigate to="/login" replace />} />
         <Route element={<OwnerProtectedRoute />}>
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           <Route path="/owner/properties" element={<OwnerProperties />} />
           <Route path="/owner/financials" element={<OwnerFinancials />} />
           <Route path="/owner/reports" element={<OwnerReports />} />
+          <Route path="/owner/communication" element={<OwnerChat />} /> {/* Added */}
         </Route>
       </Routes>
     </Router>

@@ -9,10 +9,13 @@ exports.getInsuranceAlerts = async (req, res) => {
         });
 
         // We need Unit info. Insurance is linked to User. User has Leases. Leases have Units.
-        // Let's fetch leases to map User -> Unit
         const leases = await prisma.lease.findMany({
             where: { status: 'Active' },
-            include: { unit: { include: { property: true } } }
+            include: {
+                unit: {
+                    include: { property: true }
+                }
+            }
         });
 
         const userLeaseMap = {};
@@ -20,8 +23,20 @@ exports.getInsuranceAlerts = async (req, res) => {
             userLeaseMap[l.tenantId] = l.unit;
         });
 
+        const getPolicyStatus = (endDate) => {
+            const end = new Date(endDate);
+            const diffTime = end - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return { label: 'Expired', color: 'red', days: diffDays };
+            if (diffDays <= 30) return { label: 'Expiring Soon', color: 'amber', days: diffDays };
+            return { label: 'Active', color: 'emerald', days: diffDays };
+        };
+
         const formatted = insurances.map(ins => {
             const unit = userLeaseMap[ins.userId];
+            const status = getPolicyStatus(ins.endDate);
+
             return {
                 id: ins.id,
                 tenantName: ins.user.name,
@@ -30,7 +45,9 @@ exports.getInsuranceAlerts = async (req, res) => {
                 provider: ins.provider,
                 policyNumber: ins.policyNumber,
                 startDate: ins.startDate.toISOString().substring(0, 10),
-                endDate: ins.endDate.toISOString().substring(0, 10)
+                endDate: ins.endDate.toISOString().substring(0, 10),
+                documentUrl: ins.documentUrl,
+                status: status
             };
         });
 

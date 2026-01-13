@@ -33,7 +33,7 @@ const Reports = () => {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5">
           <div className="p-5 rounded-xl bg-white shadow-[0_10px_25px_rgba(0,0,0,0.06)] animate-in slide-in-from-bottom-4 duration-600 fade-in">
             <h4 className="text-sm text-slate-500">Total Revenue</h4>
-            <p className="text-[26px] font-bold my-1.5 font-sans">₹ {kpi.totalRevenue.toLocaleString()}</p>
+            <p className="text-[26px] font-bold my-1.5 font-sans">$ {kpi.totalRevenue.toLocaleString('en-CA')}</p>
             <span className="text-xs text-emerald-600 font-medium">+12% this month</span>
           </div>
 
@@ -51,7 +51,7 @@ const Reports = () => {
 
           <div className="p-5 rounded-xl bg-white shadow-[0_10px_25px_rgba(0,0,0,0.06)] animate-in slide-in-from-bottom-4 duration-600 fade-in delay-300">
             <h4 className="text-sm text-slate-500">Outstanding Dues</h4>
-            <p className="text-[26px] font-bold my-1.5 font-sans">₹ {kpi.outstandingDues.toLocaleString()}</p>
+            <p className="text-[26px] font-bold my-1.5 font-sans">$ {kpi.outstandingDues.toLocaleString('en-CA')}</p>
             <span className="text-xs text-red-600 font-medium">Needs Attention</span>
           </div>
         </div>
@@ -99,7 +99,7 @@ const Reports = () => {
                 {topProperties.length > 0 ? topProperties.map((p, i) => (
                   <tr key={i}>
                     <td className="p-3 text-sm text-slate-700 border-b border-slate-100">{p.name}</td>
-                    <td className="p-3 text-sm text-slate-700 border-b border-slate-100">₹ {p.revenue.toLocaleString()}</td>
+                    <td className="p-3 text-sm text-slate-700 border-b border-slate-100">$ {p.revenue.toLocaleString('en-CA')}</td>
                     <td className="p-3 text-sm text-slate-700 border-b border-slate-100">{p.occupancy}%</td>
                   </tr>
                 )) : (

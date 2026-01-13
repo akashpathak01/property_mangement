@@ -156,6 +156,38 @@ exports.createLease = async (req, res) => {
             data: { status: 'Occupied' }
         });
 
+        // NEW: Auto-create Invoice for the first month if Lease is Active
+        if (lease.status === 'Active') {
+            // Check if invoice already exists for this month/lease to avoid duplicates if re-running
+            const monthStr = new Date(startDate).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const existingInvoice = await prisma.invoice.findFirst({
+                where: {
+                    tenantId: tenantId,
+                    unitId: uId,
+                    month: monthStr
+                }
+            });
+
+            if (!existingInvoice) {
+                const count = await prisma.invoice.count();
+                const invoiceNo = `INV-${String(count + 1).padStart(3, '0')}`;
+
+                await prisma.invoice.create({
+                    data: {
+                        invoiceNo,
+                        tenantId: tenantId,
+                        unitId: uId,
+                        month: monthStr,
+                        rent: parseFloat(monthlyRent) || 0,
+                        serviceFees: 0,
+                        amount: parseFloat(monthlyRent) || 0,
+                        status: 'Unpaid' // As requested: UNPAID
+                    }
+                });
+            }
+        }
+
         res.status(201).json(lease);
     } catch (error) {
         console.error('Create Lease Error:', error);

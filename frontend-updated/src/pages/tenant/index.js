@@ -6,3 +6,4 @@ export * from './TenantPayments';
 export * from './TenantDocuments';
 export * from './TenantInsurance';
 export * from './TenantTickets';
+export * from './TenantChat';

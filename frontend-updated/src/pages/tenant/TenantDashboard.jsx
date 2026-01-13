@@ -58,7 +58,7 @@ export const TenantDashboard = () => {
                 setDashboardCards([
                     {
                         title: 'Current Rent',
-                        value: `₹${stats.currentRent.toLocaleString()}`,
+                        value: `$${stats.currentRent.toLocaleString('en-CA')}`,
                         subValue: stats.rentDueStatus,
                         icon: CreditCard,
                         color: 'bg-blue-500',

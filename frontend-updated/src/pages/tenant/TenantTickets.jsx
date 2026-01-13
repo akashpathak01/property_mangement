@@ -35,33 +35,35 @@ export const TenantTickets = () => {
         const form = e.target;
 
         try {
-            const res = await api.post('/tenant/tickets', {
-                subject: form.subject.value,
-                desc: form.description.value,
-                priority: form.priority.value
-            });
-            // We ignore actual file upload to backend for now
-            // But visually update local state to mimic it
-            const newTicket = res.data;
-            const ticketId = newTicket.id;
+            const formData = new FormData();
+            formData.append('subject', form.subject.value);
+            formData.append('description', form.description.value);
+            formData.append('priority', form.priority.value);
 
-            // Handle Attachments (Local State only for demo)
+            // Handle Attachments
             const imageFiles = Array.from(form.images.files);
-            const videoFile = form.video.files[0];
+            imageFiles.forEach(file => {
+                formData.append('images', file);
+            });
 
-            if (imageFiles.length > 0 || videoFile) {
-                setAttachments(prev => ({
-                    ...prev,
-                    [ticketId]: {
-                        images: imageFiles.map(f => URL.createObjectURL(f)),
-                        video: videoFile ? URL.createObjectURL(videoFile) : null
-                    }
-                }));
+            const videoFile = form.video.files[0];
+            if (videoFile) {
+                formData.append('video', videoFile);
             }
+
+            const res = await api.post('/tenant/tickets', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            const newTicket = res.data;
 
             setTickets([newTicket, ...tickets]);
             setShowNew(false);
+            form.reset();
         } catch (e) {
+            console.error('Upload Error:', e);
             alert('Failed to create ticket');
         } finally {
             setIsSubmitting(false);
@@ -195,42 +197,32 @@ export const TenantTickets = () => {
                                 <p className="text-slate-600 font-medium mt-1">{selectedTicket.desc}</p>
                             </div>
 
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Attachments</label>
-                                {attachments[selectedTicket.id] ? (
-                                    <div className="space-y-4">
-                                        {attachments[selectedTicket.id].images?.length > 0 && (
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {attachments[selectedTicket.id].images.map((img, i) => (
-                                                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 cursor-pointer hover:opacity-90 transition-opacity">
-                                                        <img src={img} alt="" className="w-full h-full object-cover" onClick={() => window.open(img, '_blank')} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {attachments[selectedTicket.id].video && (
-                                            <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-900 aspect-video relative group">
-                                                <video src={attachments[selectedTicket.id].video} className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none">
-                                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white ring-4 ring-white/10">
-                                                        <Clock size={24} />
-                                                    </div>
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Attachments</label>
+                            {selectedTicket.attachments && selectedTicket.attachments.length > 0 ? (
+                                <div className="space-y-4">
+                                    {selectedTicket.attachments.some(a => a.type === 'image') && (
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {selectedTicket.attachments.filter(a => a.type === 'image').map((img, i) => (
+                                                <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 cursor-pointer hover:opacity-90 transition-opacity">
+                                                    <img src={img.url} alt="" className="w-full h-full object-cover" onClick={() => window.open(img.url, '_blank')} />
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => window.open(attachments[selectedTicket.id].video, '_blank')}
-                                                    className="absolute inset-0 w-full h-full opacity-0"
-                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    {selectedTicket.attachments.find(a => a.type === 'video') && (
+                                        <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-900 aspect-video relative group">
+                                            <video src={selectedTicket.attachments.find(a => a.type === 'video').url} className="w-full h-full object-cover" controls />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none group-data-[playing=true]:hidden">
+                                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white ring-4 ring-white/10">
+                                                    <Clock size={24} />
+                                                </div>
                                             </div>
-                                        )}
-                                        {!attachments[selectedTicket.id].images?.length && !attachments[selectedTicket.id].video && (
-                                            <p className="text-sm text-slate-400 italic">No attachments provided</p>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-slate-400 italic">No attachments provided</p>
-                                )}
-                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400 italic">No attachments provided</p>
+                            )}
 
                             <Button variant="primary" className="w-full h-14 rounded-2xl font-black text-lg" onClick={() => setSelectedTicket(null)}>
                                 Close

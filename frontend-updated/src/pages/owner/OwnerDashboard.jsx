@@ -7,67 +7,29 @@ import {
     CircleDollarSign,
     AlertCircle,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    CheckCircle2
 } from 'lucide-react';
 import api from '../../api/client';
 
 export const OwnerDashboard = () => {
-    // Isolated Mock Data for "owner_demo_1"
-    const [stats, setStats] = React.useState([
-        {
-            label: 'Total Properties',
-            value: '12',
-            icon: Building2,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50',
-            trend: '+2 this year',
-            trendUp: true
-        },
-        {
-            label: 'Total Units',
-            value: '48',
-            icon: Building2,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50',
-            trend: 'Across 4 locations',
-            trendUp: null
-        },
-        {
-            label: 'Occupancy Rate',
-            value: '94.2%',
-            icon: Users,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50',
-            trend: '+1.4% from last month',
-            trendUp: true
-        },
-        {
-            label: 'Monthly Revenue',
-            value: '₹ 8,45,000',
-            icon: CircleDollarSign,
-            color: 'text-violet-600',
-            bg: 'bg-violet-50',
-            trend: '-₹ 12,000 (Adjustments)',
-            trendUp: false
-        },
-        {
-            label: 'Outstanding Dues',
-            value: '₹ 42,500',
-            icon: AlertCircle,
-            color: 'text-rose-600',
-            bg: 'bg-rose-50',
-            trend: '3 tenants pending',
-            trendUp: false
-        },
-    ]);
+    const [stats, setStats] = React.useState([]);
+    const [recentFinancials, setRecentFinancials] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+    const [insuranceExpiryCount, setInsuranceExpiryCount] = React.useState(0);
 
     React.useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/owner/dashboard/stats');
-                const data = res.data;
+                const [statsRes, finRes] = await Promise.all([
+                    api.get('/owner/dashboard/stats'),
+                    api.get('/owner/dashboard/financial-pulse')
+                ]);
 
-                // Map backend data to UI structure
+                const data = statsRes.data;
+                const financials = finRes.data;
+
+                // 1. Map Stats
                 setStats([
                     {
                         label: 'Total Properties',
@@ -75,7 +37,7 @@ export const OwnerDashboard = () => {
                         icon: Building2,
                         color: 'text-indigo-600',
                         bg: 'bg-indigo-50',
-                        trend: '+2 this year', // Mock trend for now
+                        trend: 'Active Portfolio',
                         trendUp: true
                     },
                     {
@@ -98,35 +60,47 @@ export const OwnerDashboard = () => {
                     },
                     {
                         label: 'Monthly Revenue',
-                        value: `₹ ${data.monthlyRevenue ? data.monthlyRevenue.toLocaleString() : '0'}`,
+                        value: `$ ${data.monthlyRevenue ? data.monthlyRevenue.toLocaleString('en-CA') : '0'}`,
                         icon: CircleDollarSign,
                         color: 'text-violet-600',
                         bg: 'bg-violet-50',
-                        trend: 'Projected',
-                        trendUp: false
+                        trend: 'Collected this month',
+                        trendUp: true
                     },
                     {
                         label: 'Outstanding Dues',
-                        value: '₹ 0', // TODO: Add dues to backend
+                        value: `$ ${data.outstandingDues ? data.outstandingDues.toLocaleString('en-CA') : '0'}`,
                         icon: AlertCircle,
                         color: 'text-rose-600',
                         bg: 'bg-rose-50',
-                        trend: '0 tenants pending',
+                        trend: 'Pending collection',
                         trendUp: false
                     },
                 ]);
+
+                setInsuranceExpiryCount(data.insuranceExpiryCount || 0);
+
+                // 2. Map Financial Pulse
+                setRecentFinancials(financials);
+
             } catch (error) {
-                console.error("Failed to fetch owner stats", error);
+                console.error("Failed to fetch owner dashboard data", error);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchStats();
+        fetchData();
     }, []);
 
-    const recentFinancials = [
-        { month: 'Jan 2026', collected: 845000, expected: 887500, dues: 42500 },
-        { month: 'Dec 2025', collected: 875000, expected: 887500, dues: 12500 },
-        { month: 'Nov 2025', collected: 860000, expected: 880000, dues: 20000 },
-    ];
+    if (loading) {
+        return (
+            <OwnerLayout title="Portfolio Overview">
+                <div className="flex items-center justify-center h-screen">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                </div>
+            </OwnerLayout>
+        );
+    }
 
     return (
         <OwnerLayout title="Portfolio Overview">
@@ -194,11 +168,11 @@ export const OwnerDashboard = () => {
                                     {recentFinancials.map((row, idx) => (
                                         <tr key={idx} className="hover:bg-white transition-colors group">
                                             <td className="px-6 py-4 text-xs font-black text-slate-700 italic">{row.month}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-slate-400 text-right font-mono">₹{row.expected.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-sm font-black text-slate-800 text-right font-mono italic">₹{row.collected.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-slate-400 text-right font-mono">${row.expected.toLocaleString('en-CA')}</td>
+                                            <td className="px-6 py-4 text-sm font-black text-slate-800 text-right font-mono italic">${row.collected.toLocaleString('en-CA')}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${row.dues > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                    {row.dues > 0 ? `₹${row.dues.toLocaleString()}` : 'CLEAR'}
+                                                    {row.dues > 0 ? `$${row.dues.toLocaleString('en-CA')}` : 'CLEAR'}
                                                 </span>
                                             </td>
                                         </tr>
@@ -209,24 +183,41 @@ export const OwnerDashboard = () => {
                     </div>
 
                     {/* Quick Access / Notice */}
-                    <div className="bg-indigo-600 rounded-3xl p-8 flex flex-col justify-between text-white shadow-2xl shadow-indigo-200 overflow-hidden relative group">
-                        <div className="relative z-10 space-y-6">
-                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                                <AlertCircle size={24} />
+                    {insuranceExpiryCount > 0 ? (
+                        <div className="bg-indigo-600 rounded-3xl p-8 flex flex-col justify-between text-white shadow-2xl shadow-indigo-200 overflow-hidden relative group">
+                            <div className="relative z-10 space-y-6">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="text-xl font-black italic tracking-tight uppercase">Compliance Notice</h4>
+                                    <p className="text-indigo-100 text-sm font-medium leading-relaxed">
+                                        {insuranceExpiryCount} properties have insurance policies expiring within the next 30 days. Please review the Insurance Alerts.
+                                    </p>
+                                </div>
+                                <button className="w-full bg-white text-indigo-600 h-14 rounded-2xl font-black text-sm shadow-xl hover:bg-slate-50 transition-colors uppercase tracking-widest">
+                                    Acknowledge & Archive
+                                </button>
                             </div>
-                            <div className="space-y-2">
-                                <h4 className="text-xl font-black italic tracking-tight uppercase">Compliance Notice</h4>
-                                <p className="text-indigo-100 text-sm font-medium leading-relaxed">
-                                    3 properties have insurance policies expiring within the next 30 days. Please review the Insurance Alerts in the Admin panel for more details.
-                                </p>
-                            </div>
-                            <button className="w-full bg-white text-indigo-600 h-14 rounded-2xl font-black text-sm shadow-xl hover:bg-slate-50 transition-colors uppercase tracking-widest">
-                                Acknowledge & Archive
-                            </button>
+                            {/* Background SVG Decor */}
+                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
                         </div>
-                        {/* Background SVG Decor */}
-                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
-                    </div>
+                    ) : (
+                        <div className="bg-emerald-600 rounded-3xl p-8 flex flex-col justify-between text-white shadow-2xl shadow-emerald-200 overflow-hidden relative group">
+                            <div className="relative z-10 space-y-6">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                    <CheckCircle2 size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="text-xl font-black italic tracking-tight uppercase">All Good!</h4>
+                                    <p className="text-emerald-100 text-sm font-medium leading-relaxed">
+                                        Your portfolio is fully compliant. No actions needed at this time.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+                        </div>
+                    )}
                 </div>
             </div>
         </OwnerLayout>

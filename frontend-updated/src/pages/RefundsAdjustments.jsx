@@ -58,7 +58,7 @@ const RefundsAdjustments = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{r.tenant}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{r.unit}</td>
                   <td className={`p-4 border-b border-gray-100 text-sm font-medium font-mono ${r.amount < 0 ? 'text-amber-700' : 'text-slate-700'}`}>
-                    ₹{Math.abs(r.amount)}
+                    ${Math.abs(r.amount).toLocaleString('en-CA')}
                   </td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{r.date}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
@@ -104,7 +104,7 @@ const RefundsAdjustments = () => {
                   ? 'bg-yellow-50 text-yellow-800 border-yellow-100'
                   : 'bg-cyan-50 text-cyan-800 border-cyan-100'
                   }`}>
-                  ₹{Math.abs(selected.amount)}
+                  ${Math.abs(selected.amount).toLocaleString('en-CA')}
                 </div>
               </div>
 

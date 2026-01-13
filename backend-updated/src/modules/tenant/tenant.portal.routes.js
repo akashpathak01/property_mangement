@@ -6,6 +6,7 @@ const tenantDocumentController = require("./tenant.document.controller");
 const tenantTicketController = require("./tenant.ticket.controller");
 const tenantInvoiceController = require("./tenant.invoice.controller");
 const tenantPaymentController = require("./tenant.payment.controller");
+const tenantInsuranceController = require("./tenant.insurance.controller");
 const upload = require("../../middlewares/upload.middleware");
 const {
   authenticate,
@@ -19,13 +20,15 @@ router.use(authorize("TENANT"));
 router.get("/dashboard", tenantPortalController.getDashboard);
 router.get("/lease", tenantLeaseController.getLeaseDetails);
 router.get("/documents", tenantDocumentController.getDocuments);
-router.get("/documents/:id/file", tenantDocumentController.getDocumentFile);
-router.post("/documents", upload.single('file'), tenantDocumentController.uploadDocument);
+router.post("/documents", tenantDocumentController.uploadDocument);
 
 router.get("/tickets", tenantTicketController.getTickets);
 router.post("/tickets", tenantTicketController.createTicket);
 
 router.get("/invoices", tenantInvoiceController.getInvoices);
 router.post("/pay", tenantPaymentController.processPayment);
+
+router.get("/insurance", tenantInsuranceController.getInsurance);
+router.post("/insurance", upload.single('file'), tenantInsuranceController.uploadInsurance);
 
 module.exports = router;

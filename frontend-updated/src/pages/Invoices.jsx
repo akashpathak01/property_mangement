@@ -264,7 +264,7 @@ export const Invoices = () => {
                                     <td className="p-4 text-sm text-slate-600">{inv.tenant}</td>
                                     <td className="p-4 text-sm text-slate-600">{inv.unit}</td>
                                     <td className="p-4 text-sm text-slate-600">{inv.month}</td>
-                                    <td className="p-4 text-sm text-slate-900 font-bold font-mono">₹ {inv.amount}</td>
+                                    <td className="p-4 text-sm text-slate-900 font-bold font-mono">$ {inv.amount.toLocaleString('en-CA')}</td>
                                     <td className="p-4 text-sm">
                                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${inv.status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
                                             inv.status === 'sent' ? 'bg-indigo-100 text-indigo-700' :
@@ -342,8 +342,8 @@ export const Invoices = () => {
                                             </div>
                                             <div className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                                                 123 Business Avenue, Suite 500<br />
-                                                Financial District, Mumbai 400001<br />
-                                                +91 22 4567 8900
+                                                Toronto, ON M5V 2N8<br />
+                                                +1 416-555-0123
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -391,7 +391,7 @@ export const Invoices = () => {
                                                     <p className="font-bold text-slate-800">Monthly Rent Payment</p>
                                                     <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest mt-0.5">Period: {viewInvoice.month}</p>
                                                 </div>
-                                                <span className="font-bold text-slate-700 font-mono italic">₹ {(viewInvoice.rent || 0).toLocaleString()}</span>
+                                                <span className="font-bold text-slate-700 font-mono italic">$ {(viewInvoice.rent || 0).toLocaleString('en-CA')}</span>
                                             </div>
                                             {(viewInvoice.serviceFees || 0) > 0 && (
                                                 <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
@@ -399,7 +399,7 @@ export const Invoices = () => {
                                                         <p className="font-bold text-slate-800">Common Area Service Fees</p>
                                                         <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest mt-0.5">Maintenance & Amenities</p>
                                                     </div>
-                                                    <span className="font-bold text-slate-700 font-mono italic">₹ {(viewInvoice.serviceFees || 0).toLocaleString()}</span>
+                                                    <span className="font-bold text-slate-700 font-mono italic">$ {(viewInvoice.serviceFees || 0).toLocaleString('en-CA')}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -410,16 +410,16 @@ export const Invoices = () => {
                                         <div className="w-64 space-y-3">
                                             <div className="flex justify-between items-center text-sm px-2">
                                                 <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Subtotal</span>
-                                                <span className="font-bold text-slate-600 font-mono italic">₹ {(viewInvoice.amount || 0).toLocaleString()}</span>
+                                                <span className="font-bold text-slate-600 font-mono italic">$ {(viewInvoice.amount || 0).toLocaleString('en-CA')}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-sm px-2">
                                                 <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Taxes (0%)</span>
-                                                <span className="font-bold text-slate-600 font-mono italic">₹ 0</span>
+                                                <span className="font-bold text-slate-600 font-mono italic">$ 0</span>
                                             </div>
                                             <div className="bg-indigo-600 rounded-2xl p-6 shadow-xl shadow-indigo-100 flex justify-between items-center text-white mt-4 relative overflow-hidden group">
                                                 <div className="relative z-10">
                                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Total Due</p>
-                                                    <p className="text-2xl font-black tracking-tight mt-1 italic">₹ {(viewInvoice.amount || 0).toLocaleString()}</p>
+                                                    <p className="text-2xl font-black tracking-tight mt-1 italic">$ {(viewInvoice.amount || 0).toLocaleString('en-CA')}</p>
                                                 </div>
                                                 <div className="absolute right-[-10%] top-[-20%] w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                                             </div>
@@ -586,7 +586,7 @@ export const Invoices = () => {
 
                                 <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-50">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Base Rent (₹)</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Base Rent ($)</label>
                                         <input
                                             type="number"
                                             placeholder="0.00"
@@ -597,7 +597,7 @@ export const Invoices = () => {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Service Fees (₹)</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Service Fees ($)</label>
                                         <input
                                             type="number"
                                             placeholder="0.00"
@@ -614,7 +614,7 @@ export const Invoices = () => {
                                         <p className="text-xs font-semibold opacity-60">Rent + Service Fees</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-2xl font-black tracking-tighter">₹ {(parseFloat(form.rent) || 0) + (parseFloat(form.serviceFees) || 0)}</span>
+                                        <span className="text-2xl font-black tracking-tighter">$ {((parseFloat(form.rent) || 0) + (parseFloat(form.serviceFees) || 0)).toLocaleString('en-CA')}</span>
                                     </div>
                                 </div>
 
@@ -655,7 +655,7 @@ export const Invoices = () => {
                                         <div className="flex justify-between items-end mb-4">
                                             <div>
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Due Amount</p>
-                                                <p className="text-3xl font-black tracking-tighter">₹ {isPaying.amount}</p>
+                                                <p className="text-3xl font-black tracking-tighter">$ {isPaying.amount.toLocaleString('en-CA')}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 mb-1">Invoice</p>

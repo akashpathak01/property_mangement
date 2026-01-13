@@ -49,7 +49,7 @@ const OutstandingDues = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{d.tenant}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{d.unit}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{d.leaseType}</td>
-                  <td className="p-4 border-b border-gray-100 text-sm font-medium font-mono text-slate-700">₹{d.amount}</td>
+                  <td className="p-4 border-b border-gray-100 text-sm font-medium font-mono text-slate-700">${d.amount.toLocaleString('en-CA')}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{d.dueDate}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${d.status === 'Overdue'
@@ -96,7 +96,7 @@ const OutstandingDues = () => {
                 <div className="flex flex-col"><label className="text-xs text-slate-500 mb-1">Status</label><span className="text-sm font-medium text-slate-900">{selectedInvoice.status}</span></div>
 
                 <div className="col-span-2 mt-2 p-4 rounded-lg bg-red-50 text-center text-xl font-bold text-red-800 border border-red-100">
-                  ₹{selectedInvoice.amount} Due
+                  ${selectedInvoice.amount.toLocaleString('en-CA')} Due
                 </div>
               </div>
 

@@ -6,7 +6,8 @@ import {
     CircleDollarSign,
     BarChart3,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
+    MessageSquare // Added
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -24,6 +25,7 @@ export const OwnerSidebar = () => {
         { icon: Building2, label: 'Properties', path: '/owner/properties' },
         { icon: CircleDollarSign, label: 'Financials', path: '/owner/financials' },
         { icon: BarChart3, label: 'Reports', path: '/owner/reports' },
+        { icon: MessageSquare, label: 'Messages', path: '/owner/communication' }, // Added
     ];
 
     return (

@@ -48,7 +48,7 @@ const PaymentsReceived = () => {
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700 font-mono">{p.id}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{p.tenant}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{p.unit}</td>
-                  <td className="p-4 border-b border-gray-100 text-sm font-medium font-mono">₹{p.amount}</td>
+                  <td className="p-4 border-b border-gray-100 text-sm font-medium font-mono">${p.amount.toLocaleString('en-CA')}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{p.method}</td>
                   <td className="p-4 border-b border-gray-100 text-sm text-slate-700">{p.date}</td>
                   <td className="p-4 border-b border-gray-100 text-sm">
@@ -90,7 +90,7 @@ const PaymentsReceived = () => {
                 <div className="flex flex-col"><label className="text-xs text-slate-500 mb-1">Paid On</label><span className="text-sm font-medium text-slate-900">{selectedPayment.date}</span></div>
 
                 <div className="col-span-2 mt-2 p-4 rounded-lg bg-emerald-50 text-center text-xl font-bold text-emerald-800 border border-emerald-100">
-                  ₹{selectedPayment.amount}
+                  ${selectedPayment.amount.toLocaleString('en-CA')}
                 </div>
               </div>
 

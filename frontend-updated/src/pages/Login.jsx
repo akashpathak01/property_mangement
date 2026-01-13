@@ -10,7 +10,8 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Ensure form submission doesn't reload
     try {
       setError('');
       setLoading(true);
@@ -18,12 +19,31 @@ export const Login = () => {
 
       const { accessToken, refreshToken, user } = res.data;
 
+      // Common storage
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('isLoggedIn', 'true'); // Keeping legacy flag for existing protected routes
 
-      navigate('/dashboard');
+      // Role-based logic
+      if (user.role === 'ADMIN') {
+          localStorage.setItem('isLoggedIn', 'true');
+          navigate('/dashboard');
+      } 
+      else if (user.role === 'TENANT') {
+          localStorage.setItem('tenantLoggedIn', 'true');
+          localStorage.setItem('currentTenantId', user.id);
+          navigate('/tenant/dashboard');
+      } 
+      else if (user.role === 'OWNER') {
+          localStorage.setItem('isOwnerLoggedIn', 'true');
+          localStorage.setItem('ownerId', user.id);
+          navigate('/owner/dashboard');
+      }
+      else {
+          setError('Unknown user role');
+          localStorage.clear();
+      }
+
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Login failed');
@@ -32,9 +52,17 @@ export const Login = () => {
     }
   };
 
-  const autofillDemo = () => {
-    setEmail('admin@property.com');
-    setPassword('123456');
+  const autofillDemo = (role) => {
+    if (role === 'admin') {
+        setEmail('admin@property.com');
+        setPassword('123456');
+    } else if (role === 'tenant') {
+        setEmail('tenant@example.com'); // You might need to adjust this to a real tenant email
+        setPassword('123456');
+    } else if (role === 'owner') {
+        setEmail('owner@property.com'); // You might need to adjust this to a real owner email
+        setPassword('123456');
+    }
   };
 
   return (
@@ -58,62 +86,45 @@ export const Login = () => {
           </div>
         )}
 
-        <div className="flex flex-col mb-5">
-          <label className="text-[13px] mb-1.5 text-slate-700">Email</label>
-          <input
-            type="email"
-            placeholder="admin@property.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-[42px] px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15 transition-all"
-          />
-        </div>
+        <form onSubmit={handleLogin}>
+            <div className="flex flex-col mb-5">
+            <label className="text-[13px] mb-1.5 text-slate-700">Email</label>
+            <input
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-[42px] px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15 transition-all w-full"
+            />
+            </div>
 
-        <div className="flex flex-col mb-5">
-          <label className="text-[13px] mb-1.5 text-slate-700">Password</label>
-          <input
-            type="password"
-            placeholder="••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-[42px] px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15 transition-all"
-          />
-        </div>
+            <div className="flex flex-col mb-5">
+            <label className="text-[13px] mb-1.5 text-slate-700">Password</label>
+            <input
+                type="password"
+                placeholder="••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-[42px] px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15 transition-all w-full"
+            />
+            </div>
 
-        <button
-          className="h-[44px] bg-blue-600 text-white border-0 rounded-md text-[15px] cursor-pointer mt-2.5 hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleLogin}
-          disabled={loading}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-slate-500 font-medium">
-            Are you a tenant?{" "}
             <button
-              onClick={() => navigate('/tenant/login')}
-              className="text-blue-600 font-bold hover:underline cursor-pointer"
+            type="submit"
+            className="w-full h-[44px] bg-blue-600 text-white border-0 rounded-md text-[15px] cursor-pointer mt-2.5 hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
             >
-              Login to Tenant Portal
+            {loading ? 'Logging in...' : 'Login'}
             </button>
-          </p>
-          <p className="text-sm text-slate-500 font-medium border-t border-slate-50 pt-2">
-            Are you an Owner?{" "}
-            <button
-              onClick={() => navigate('/owner/login')}
-              className="text-blue-600 font-bold hover:underline cursor-pointer"
-            >
-              Login to Owner Portal
-            </button>
-          </p>
-        </div>
+        </form>
 
         <div className="mt-7 bg-slate-100 p-3.5 rounded-md text-[13px] text-slate-600">
-          <strong className="block mb-1 text-slate-900">Demo Credentials</strong>
-          <p className="mb-0.5">Email: <span className="font-semibold text-slate-800">admin@property.com</span></p>
-          <p className="mb-2">Password: <span className="font-semibold text-slate-800">123456</span></p>
-          <button onClick={autofillDemo} className="bg-none border-0 text-blue-600 cursor-pointer p-0 text-[13px] hover:underline font-medium">Click to autofill</button>
+          <strong className="block mb-2 text-slate-900">Demo Credentials</strong>
+          <div className="flex gap-2">
+            <button onClick={() => autofillDemo('admin')} className="text-xs bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 text-slate-700">Admin</button>
+            <button onClick={() => autofillDemo('owner')} className="text-xs bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 text-slate-700">Owner</button>
+            <button onClick={() => autofillDemo('tenant')} className="text-xs bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 text-slate-700">Tenant</button>
+          </div>
         </div>
       </div>
     </div>
