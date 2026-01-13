@@ -37,7 +37,7 @@ exports.processPayment = async (req, res) => {
         const updatedInvoice = await prisma.invoice.update({
             where: { id: invoiceId },
             data: {
-                status: 'paid',
+                status: 'paid', // Mark as paid lowercase
                 paidAt: new Date()
             }
         });
