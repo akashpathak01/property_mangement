@@ -1,286 +1,331 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
-import { Mail, MessageSquare, Users, Send, CheckCircle2, History, ExternalLink, Clock } from 'lucide-react';
-import { Button } from '../components/Button';
-import clsx from 'clsx';
-import api from '../api/client';
+import { communicationService } from '../services/communicationService';
+import { Search, Send, User, MoreVertical, RefreshCw, Filter } from 'lucide-react';
 
-export const Communication = () => {
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('email');
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [formData, setFormData] = useState({
-        recipient: 'all',
-        subject: '',
-        message: '',
-    });
+const Communication = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [conversations, setConversations] = useState([]); // List of ALL users
+  const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'OWNER' | 'TENANT'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-    const tenants = [
-        { id: 1, name: 'John Smith', unit: '301' },
-        { id: 2, name: 'ABC Pvt Ltd', unit: '402 (Bedroom 2)' },
-        { id: 3, name: 'Maria Garcia', unit: '105' },
-    ];
+  const messagesEndRef = useRef(null);
+  const chatIntervalRef = useRef(null);
 
-    const [commHistory, setCommHistory] = useState([]);
+  // 1. Load Current User & Initial Conversations
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+    fetchConversations();
 
-    React.useEffect(() => {
-        fetchHistory();
-    }, []);
+    // Poll for new conversations/unread counts every 10s
+    const convInterval = setInterval(fetchConversations, 10000);
+    return () => clearInterval(convInterval);
+  }, []);
 
-    const fetchHistory = async () => {
-        try {
-            const res = await api.get('/admin/communication');
-            setCommHistory(res.data);
-        } catch (e) { console.error(e); }
+  // 2. Fetch Conversations (Users)
+  const fetchConversations = async () => {
+    try {
+      setRefreshing(true);
+      const users = await communicationService.getConversations();
+      setConversations(users);
+    } catch (error) {
+      console.error("Failed to fetch conversations", error);
+    } finally {
+        setRefreshing(false);
+    }
+  };
+
+  // 3. Filter Conversations based on Tab & Search
+  const getFilteredConversations = () => {
+    let filtered = conversations;
+
+    // Filter by Tab
+    if (activeTab !== 'ALL') {
+        filtered = filtered.filter(u => u.role === activeTab);
+    }
+
+    // Filter by Search
+    if (searchTerm) {
+        filtered = filtered.filter(u => 
+            u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            u.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+
+    return filtered;
+  };
+
+  const displayedUsers = getFilteredConversations();
+
+  // 4. Select User & Fetch History
+  const handleSelectUser = async (user) => {
+    setSelectedUser(user);
+    setMessages([]); // Clear previous messages immediately
+    setLoading(true);
+    await fetchHistory(user.id);
+    setLoading(false);
+    
+    // Mark as read immediately
+    try {
+        await communicationService.markAsRead(user.id);
+        // Optimistically update unread count
+        setConversations(prev => prev.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchHistory = async (userId) => {
+    try {
+      const history = await communicationService.getHistory(userId);
+      setMessages(history);
+      scrollToBottom();
+    } catch (error) {
+      console.error("Failed to fetch history", error);
+    }
+  };
+
+  // 5. Poll for Messages when User is Selected
+  useEffect(() => {
+    if (chatIntervalRef.current) clearInterval(chatIntervalRef.current);
+
+    if (selectedUser) {
+      chatIntervalRef.current = setInterval(() => {
+        fetchHistory(selectedUser.id);
+      }, 3000); // Poll every 3 seconds
+    }
+
+    return () => {
+      if (chatIntervalRef.current) clearInterval(chatIntervalRef.current);
     };
+  }, [selectedUser]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/admin/communication', {
-                recipient: formData.recipient === 'all' ? 'All Tenants' : 'Selected Tenants', // Simplified for demo
-                subject: activeTab === 'email' ? formData.subject : 'SMS Message',
-                message: formData.message,
-                type: activeTab === 'email' ? 'Email' : 'SMS'
-            });
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
-            setFormData({ recipient: 'all', subject: '', message: '' });
-            fetchHistory();
-        } catch (e) {
-            alert('Failed to send');
-        }
-    };
+  // 6. Send Message
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedUser) return;
 
-    return (
-        <MainLayout title="Communication Center">
-            <div className="p-6 max-w-4xl mx-auto">
-                {/* Tabs */}
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-8 w-fit">
-                    <button
-                        onClick={() => setActiveTab('email')}
-                        className={clsx(
-                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all",
-                            activeTab === 'email' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                        )}
-                    >
-                        <Mail size={18} />
-                        Email
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('sms')}
-                        className={clsx(
-                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all",
-                            activeTab === 'sms' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                        )}
-                    >
-                        <MessageSquare size={18} />
-                        SMS
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={clsx(
-                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all",
-                            activeTab === 'history' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                        )}
-                    >
-                        <History size={18} />
-                        History
-                    </button>
-                </div>
+    setSending(true);
+    try {
+      await communicationService.sendMessage(selectedUser.id, newMessage);
+      setNewMessage('');
+      await fetchHistory(selectedUser.id); // Refresh immediately
+    } catch (error) {
+      console.error("Failed to send message", error);
+    } finally {
+      setSending(false);
+    }
+  };
 
-                <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
-                        <div>
-                            <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                                {activeTab === 'email' ? 'Compose Bulk Email' :
-                                    activeTab === 'sms' ? 'Compose Bulk SMS' : 'Communication History'}
-                            </h2>
-                            <p className="text-sm text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                                {activeTab === 'history' ? 'Overview of all sent communications' : 'Message will be sent to selected recipients.'}
-                            </p>
-                        </div>
-                    </div>
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-                    {activeTab === 'history' ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Time</th>
-                                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Recipient</th>
-                                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Channel</th>
-                                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Summary</th>
-                                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {commHistory.map(item => (
-                                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center gap-2 text-slate-500">
-                                                    <Clock size={14} />
-                                                    <span className="text-xs font-bold">{item.date}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <label className="flex flex-col">
-                                                    <span
-                                                        onClick={() => {
-                                                            if (item.tenant !== 'All Tenants') {
-                                                                const tenantObj = tenants.find(t => t.name === item.tenant);
-                                                                if (tenantObj) navigate(`/tenants/${tenantObj.id}`);
-                                                                else navigate('/tenants');
-                                                            }
-                                                        }}
-                                                        className={clsx(
-                                                            "text-sm font-black text-slate-800 italic transition-colors flex items-center gap-1",
-                                                            item.tenant !== 'All Tenants' ? "cursor-pointer hover:text-indigo-600 hover:underline" : "cursor-default"
-                                                        )}
-                                                    >
-                                                        {item.tenant}
-                                                        {item.tenant !== 'All Tenants' && <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-                                                    </span>
-                                                </label>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center gap-2">
-                                                    {item.channel === 'Email' ? <Mail size={14} className="text-indigo-400" /> : <MessageSquare size={14} className="text-slate-400" />}
-                                                    <span className="text-xs font-bold text-slate-600">{item.channel}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]">{item.summary}</p>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest">
-                                                    {item.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {commHistory.length === 0 && (
-                                <div className="p-20 text-center text-slate-400 italic">No communication history found.</div>
-                            )}
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                            {/* Recipient Selection */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Recipients</label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, recipient: 'all' })}
-                                        className={clsx(
-                                            "flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                                            formData.recipient === 'all' ? "border-indigo-600 bg-indigo-50/50" : "border-slate-100 hover:border-slate-200"
-                                        )}
-                                    >
-                                        <div className={clsx("w-5 h-5 rounded-full border-2 flex items-center justify-center", formData.recipient === 'all' ? "border-indigo-600 bg-indigo-600" : "border-slate-300")}>
-                                            {formData.recipient === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-slate-800 text-sm italic">All Tenants</p>
-                                            <p className="text-[10px] text-slate-500">Sends to all 42 active tenants</p>
-                                        </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, recipient: 'selected' })}
-                                        className={clsx(
-                                            "flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                                            formData.recipient === 'selected' ? "border-indigo-600 bg-indigo-50/50" : "border-slate-100 hover:border-slate-200"
-                                        )}
-                                    >
-                                        <div className={clsx("w-5 h-5 rounded-full border-2 flex items-center justify-center", formData.recipient === 'selected' ? "border-indigo-600 bg-indigo-600" : "border-slate-300")}>
-                                            {formData.recipient === 'selected' && <div className="w-2 h-2 rounded-full bg-white" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-slate-800 text-sm italic">Selected Tenants</p>
-                                            <p className="text-[10px] text-slate-500">Pick specific tenants from list</p>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {formData.recipient === 'selected' && (
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Recipients</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {tenants.map(t => (
-                                            <label key={t.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition-colors">
-                                                <input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" defaultChecked />
-                                                <span className="text-xs font-bold text-slate-700">{t.name} <span className="text-slate-400 font-medium">({t.unit})</span></span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'email' && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email Subject</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.subject}
-                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                        placeholder="e.g. Important Maintenance Update"
-                                        className="w-full p-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium"
-                                    />
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center px-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeTab === 'email' ? 'Message' : 'SMS Content'}</label>
-                                    {activeTab === 'sms' && (
-                                        <span className={clsx("text-[10px] font-bold", charCount > 160 ? "text-rose-500" : "text-slate-400")}>
-                                            {charCount} / 160 characters
-                                        </span>
-                                    )}
-                                </div>
-                                <textarea
-                                    required
-                                    value={formData.message}
-                                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                                    placeholder={activeTab === 'email' ? "Type your email message here..." : "Type your SMS content (keep it brief)..."}
-                                    rows={6}
-                                    className="w-full p-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium resize-none"
-                                />
-                            </div>
-
-                            <div className="pt-4">
-                                <Button type="submit" className="w-full h-14 rounded-2xl font-black text-base shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 group overflow-hidden relative">
-                                    <span className="relative z-10">
-                                        {activeTab === 'email' ? 'Send Bulk Email' : 'Send Bulk SMS'}
-                                    </span>
-                                    <Send size={20} className="relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                </Button>
-                            </div>
-                        </form>
-                    )}
-                </div>
-
-                {/* Toast Notification */}
-                {showSuccess && (
-                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-300 z-[200]">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                            <CheckCircle2 size={18} className="text-white" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-sm tracking-tight">
-                                {activeTab === 'email' ? 'Email Queued Successfully' : 'SMS Queued Successfully'}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Demo Mode: No messages sent</p>
-                        </div>
-                    </div>
-                )}
+  return (
+    <MainLayout title="Communication Hub">
+      <div className="flex h-[calc(100vh-140px)] bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.06)] overflow-hidden">
+        
+        {/* LEFT: SIDEBAR (User List) */}
+        <div className="w-[340px] border-r border-slate-100 flex flex-col bg-slate-50/50">
+          
+          {/* Header & Tabs */}
+          <div className="p-4 bg-white border-b border-slate-100 space-y-4">
+            <div className="flex items-center justify-between">
+                <h2 className="font-bold text-slate-800">Messages</h2>
+                <button onClick={fetchConversations} className={`p-2 rounded-full hover:bg-slate-100 transition-colors ${refreshing ? 'animate-spin text-indigo-600' : 'text-slate-400'}`}>
+                    <RefreshCw size={16} />
+                </button>
             </div>
-        </MainLayout>
-    );
+
+            {/* Tabs */}
+            <div className="flex p-1 bg-slate-100 rounded-lg">
+                <button 
+                    onClick={() => setActiveTab('ALL')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'ALL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    All
+                </button>
+                <button 
+                    onClick={() => setActiveTab('OWNER')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'OWNER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Owners
+                </button>
+                <button 
+                    onClick={() => setActiveTab('TENANT')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TENANT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Tenants
+                </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* User List */}
+          <div className="flex-1 overflow-y-auto">
+            {displayedUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-slate-400">
+                    <Filter size={24} className="mb-2 opacity-50" />
+                    <span className="text-sm font-medium">No {activeTab === 'ALL' ? 'users' : activeTab.toLowerCase() + 's'} found</span>
+                </div>
+            ) : (
+                displayedUsers.map(user => (
+                  <div 
+                    key={user.id}
+                    onClick={() => handleSelectUser(user)}
+                    className={`p-4 flex items-center gap-3 cursor-pointer transition-colors border-b border-slate-50 hover:bg-white group ${selectedUser?.id === user.id ? 'bg-white border-l-4 border-l-indigo-600 shadow-sm z-10' : 'border-l-4 border-l-transparent'}`}
+                  >
+                    <div className="relative">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm ${selectedUser?.id === user.id ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
+                        {user.name ? user.name.charAt(0).toUpperCase() : <User size={16} />}
+                        </div>
+                        {/* Status Indicator (Mock) */}
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-0.5">
+                        <h4 className={`text-sm font-semibold truncate ${selectedUser?.id === user.id ? 'text-indigo-900' : 'text-slate-700'}`}>
+                          {user.name || user.email}
+                        </h4>
+                        {user.lastMessage && (
+                            <span className="text-[10px] text-slate-400 shrink-0 ml-2">
+                                {new Date(user.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        )}
+                      </div>
+                      <p className={`text-xs truncate ${user.unreadCount > 0 ? 'font-bold text-slate-800' : 'text-slate-400'}`}>
+                        {user.role && (
+                             <span className="inline-block mr-1.5 px-1 py-[1px] rounded-[3px] bg-slate-100 text-[9px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200">
+                                {user.role === 'OWNER' ? 'OWN' : 'TNT'}
+                             </span>
+                        )}
+                        {user.lastMessage ? user.lastMessage.content : 'No messages yet'}
+                      </p>
+                    </div>
+
+                    {user.unreadCount > 0 && (
+                        <span className="w-5 h-5 flex items-center justify-center bg-indigo-600 text-white text-[10px] font-bold rounded-full shadow-md shadow-indigo-100">
+                            {user.unreadCount}
+                        </span>
+                    )}
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: CHAT AREA */}
+        <div className="flex-1 flex flex-col bg-slate-50 relative">
+          {!selectedUser ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100">
+                  <User size={40} className="text-slate-300" />
+               </div>
+               <h3 className="text-lg font-semibold text-slate-700 mb-1">Select a conversation</h3>
+               <p className="text-sm text-slate-400">Choose a tenant or owner to start chatting</p>
+            </div>
+          ) : (
+            <>
+              {/* Active Chat Header */}
+              <div className="h-[73px] px-6 bg-white border-b border-slate-100 flex items-center justify-between shadow-sm z-20">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-100">
+                      {selectedUser.name ? selectedUser.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            {selectedUser.name || selectedUser.email}
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wide border border-indigo-100">
+                                {selectedUser.role}
+                            </span>
+                        </h3>
+                        <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 
+                            Active Now
+                        </p>
+                    </div>
+                </div>
+                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all">
+                    <MoreVertical size={20} />
+                </button>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+                 {loading && messages.length === 0 ? (
+                    <div className="flex justify-center p-8"><RefreshCw className="animate-spin text-indigo-400" /></div>
+                 ) : (
+                     messages.map((msg, index) => {
+                         const isMe = msg.senderId === currentUser?.id;
+                         return (
+                             <div key={msg.id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+                                 {!isMe && (
+                                     <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 mr-3 self-end shadow-sm">
+                                         {msg.sender?.name?.charAt(0) || 'U'}
+                                     </div>
+                                 )}
+                                 <div className={`max-w-[65%] px-5 py-3.5 rounded-2xl text-[13.5px] leading-relaxed shadow-sm transition-all ${
+                                     isMe 
+                                     ? 'bg-indigo-600 text-white rounded-br-sm shadow-indigo-100' 
+                                     : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'
+                                 }`}>
+                                     {msg.content}
+                                     <div className={`text-[10px] mt-1.5 text-right font-medium ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                     </div>
+                                 </div>
+                             </div>
+                         );
+                     })
+                 )}
+                 <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Area */}
+              <div className="p-4 bg-white border-t border-slate-100">
+                <form onSubmit={handleSendMessage} className="flex gap-3 max-w-4xl mx-auto">
+                    <input 
+                        type="text" 
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={`Message ${selectedUser.name || 'user'}...`}
+                        className="flex-1 h-12 px-5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-700 placeholder:text-slate-400"
+                    />
+                    <button 
+                        type="submit" 
+                        disabled={sending || !newMessage.trim()}
+                        className="h-12 w-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {sending ? <RefreshCw className="animate-spin" size={20} /> : <Send size={20} />}
+                    </button>
+                </form>
+              </div>
+            </>
+          )}
+        </div>
+
+      </div>
+    </MainLayout>
+  );
 };
+
+export default Communication;

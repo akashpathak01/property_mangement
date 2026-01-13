@@ -9,6 +9,7 @@ async function startServer() {
         // Check DB connection
         await prisma.$connect();
         console.log('✅ Database connected successfully');
+        console.log('DEBUG: JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 'undefined');
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);

@@ -15,6 +15,10 @@ export const TenantDocuments = () => {
     const [showUpload, setShowUpload] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Add file input ref
+    const fileInputRef = React.useRef(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+
     React.useEffect(() => {
         fetchDocs();
     }, []);
@@ -22,14 +26,19 @@ export const TenantDocuments = () => {
     const fetchDocs = async () => {
         try {
             const res = await api.get('/tenant/documents');
-            // Assuming backend returns array of docs
             if (res.data.length > 0) {
                 setDocs(res.data);
             } else {
-                setDocs([]); // Keep empty if no docs
+                setDocs([]);
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
         }
     };
 
@@ -38,18 +47,47 @@ export const TenantDocuments = () => {
         setIsUploading(true);
         const form = e.target;
 
+        if (!selectedFile) {
+            alert("Please select a file");
+            setIsUploading(false);
+            return;
+        }
+
         try {
-            const res = await api.post('/tenant/documents', {
-                name: form.docName.value || 'Uploaded_Document.pdf',
-                type: form.docType.value
+            const formData = new FormData();
+            formData.append('name', form.docName.value || selectedFile.name);
+            formData.append('type', form.docType.value);
+            formData.append('file', selectedFile);
+
+            const res = await api.post('/tenant/documents', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
+
             setDocs([res.data, ...docs]);
             setShowUpload(false);
+            setSelectedFile(null);
         } catch (e) {
+            console.error(e);
             alert('Upload failed');
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleView = (url) => {
+        // Backend url is relative /uploads/..., we need full url usually
+        // Assuming backend is on same host or proxied? 
+        // We might need base URL if separated. 
+        // For now, assume relative works if key is correct or construct it.
+        // Usually api client might have base url.
+        // Let's assume absolute path from server 'http://localhost:5000/uploads/...'
+        // or just window.open(api.defaults.baseURL + url)
+
+        // Quick fix: construct url
+        const baseUrl = api.defaults.baseURL.replace('/api', '');
+        window.open(`${baseUrl}${url}`, '_blank');
     };
 
     return (
@@ -96,12 +134,25 @@ export const TenantDocuments = () => {
                                         </td>
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all">
-                                                    <Eye size={20} />
-                                                </button>
-                                                <button className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
-                                                    <Download size={20} />
-                                                </button>
+                                                {doc.fileUrl && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleView(doc.fileUrl)}
+                                                            className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                                                        >
+                                                            <Eye size={20} />
+                                                        </button>
+                                                        <a
+                                                            href={`${api.defaults.baseURL.replace('/api', '')}${doc.fileUrl}`}
+                                                            download
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                        >
+                                                            <Download size={20} />
+                                                        </a>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -133,7 +184,7 @@ export const TenantDocuments = () => {
                         <form onSubmit={handleUpload} className="p-8 space-y-6">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Friendly Name</label>
-                                <input name="docName" required className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-primary-500 outline-none font-medium text-slate-700" placeholder="e.g. Utility Bill Jan" />
+                                <input name="docName" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-primary-500 outline-none font-medium text-slate-700" placeholder="e.g. Utility Bill Jan" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Document Type</label>
@@ -144,16 +195,33 @@ export const TenantDocuments = () => {
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-                            <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center space-y-4 hover:border-primary-300 transition-colors cursor-pointer group">
+
+                            <input
+                                type="file"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                                accept="application/pdf,image/*"
+                            />
+
+                            <div
+                                className={`border-2 border-dashed rounded-2xl p-8 text-center space-y-4 hover:border-primary-300 transition-colors cursor-pointer group ${selectedFile ? 'border-primary-500 bg-primary-50/10' : 'border-slate-200'}`}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
                                 <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mx-auto text-slate-400 group-hover:text-primary-500 group-hover:bg-primary-50 transition-colors">
-                                    <Upload size={24} />
+                                    {selectedFile ? <CheckCircle2 size={24} className="text-emerald-500" /> : <Upload size={24} />}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-700">Click to select file</p>
-                                    <p className="text-xs text-slate-400 font-medium mt-1">PDF, JPG, PNG (Max 10MB)</p>
+                                    <p className="text-sm font-bold text-slate-700">
+                                        {selectedFile ? selectedFile.name : 'Click to select file'}
+                                    </p>
+                                    <p className="text-xs text-slate-400 font-medium mt-1">
+                                        {selectedFile ? `${Math.round(selectedFile.size / 1024)} KB` : 'PDF, JPG, PNG (Max 10MB)'}
+                                    </p>
                                 </div>
                             </div>
-                            <Button variant="primary" className="w-full h-14 rounded-2xl font-black text-lg" disabled={isUploading}>
+
+                            <Button variant="primary" className="w-full h-14 rounded-2xl font-black text-lg" disabled={isUploading || !selectedFile}>
                                 {isUploading ? 'Uploading...' : 'Confirm Upload'}
                             </Button>
                         </form>

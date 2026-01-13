@@ -9,7 +9,8 @@ import {
     Wrench,
     LogOut,
     X,
-    CreditCard as PaymentIcon
+    CreditCard as PaymentIcon,
+    MessageSquare // Added
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -21,6 +22,7 @@ const TENANT_NAV_ITEMS = [
     { icon: Files, label: "My Documents", path: "/tenant/documents" },
     { icon: ShieldCheck, label: "Insurance", path: "/tenant/insurance" },
     { icon: Wrench, label: "Maintenance Tickets", path: "/tenant/tickets" },
+    { icon: MessageSquare, label: "Messages", path: "/tenant/communication" }, // Added
 ];
 
 export const TenantSidebar = ({ isOpen, onClose }) => {

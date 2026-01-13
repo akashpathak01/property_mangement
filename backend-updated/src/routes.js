@@ -26,5 +26,6 @@ router.use('/admin/units', unitRoutes);
 router.use('/admin', adminRoutes);
 router.use('/owner', ownerRoutes);
 router.use('/tenant', tenantPortalRoutes);
+router.use('/communication', require('./modules/communication/communication.routes'));
 
 module.exports = router;
