@@ -14,6 +14,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api', routes);
+// app.use('/uploads', express.static('uploads')); // Removed for security
 
 // Error Handling
 app.use((err, req, res, next) => {

@@ -315,13 +315,13 @@ export const Tenants = () => {
 
                   <span className="w-fit">
                     <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${tenant.leaseStatus === 'Active'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                        : tenant.leaseStatus === 'DRAFT'
-                          ? 'bg-amber-50 text-amber-700 border-amber-100'
-                          : 'bg-red-50 text-red-700 border-red-100'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                      : tenant.leaseStatus === 'DRAFT'
+                        ? 'bg-amber-50 text-amber-700 border-amber-100'
+                        : 'bg-red-50 text-red-700 border-red-100'
                       }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${tenant.leaseStatus === 'Active' ? 'bg-emerald-500' :
-                          tenant.leaseStatus === 'DRAFT' ? 'bg-amber-500' : 'bg-red-500'
+                        tenant.leaseStatus === 'DRAFT' ? 'bg-amber-500' : 'bg-red-500'
                         }`}></span>
                       {tenant.leaseStatus === 'DRAFT' ? 'Draft' : tenant.leaseStatus}
                     </span>
