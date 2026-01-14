@@ -51,7 +51,18 @@ export const LeaseFormBedroom = () => {
             try {
                 // Fetch units for this building with BEDROOM_WISE rental mode that have assigned tenants
                 const res = await api.get(`/admin/leases/units-with-tenants?propertyId=${buildingId}&rentalMode=BEDROOM_WISE`);
-                setUnits(res.data.data || []);
+                const allUnits = res.data.data || [];
+
+                // Fetch all leases to find active ones
+                const leasesRes = await api.get('/admin/leases');
+                const activeUnits = leasesRes.data
+                    .filter(l => l.status === 'active')
+                    .map(l => l.unit);
+
+                // Filter out units that already have an active lease
+                const filteredUnits = allUnits.filter(u => !activeUnits.includes(u.unitNumber));
+
+                setUnits(filteredUnits);
             } catch (error) {
                 console.error('Failed to fetch units', error);
             }
