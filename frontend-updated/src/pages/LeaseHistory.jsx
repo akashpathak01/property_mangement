@@ -169,6 +169,10 @@ export const LeaseHistory = () => {
                                     <span className="text-sm font-semibold text-slate-900">{selectedLease.unit}</span>
                                 </div>
                                 <div className="flex justify-between py-3 border-b border-slate-100">
+                                    <span className="text-sm font-medium text-slate-500">Monthly Rent</span>
+                                    <span className="text-sm font-semibold text-slate-900">${(selectedLease.monthlyRent || 0).toLocaleString('en-CA')}</span>
+                                </div>
+                                <div className="flex justify-between py-3 border-b border-slate-100">
                                     <span className="text-sm font-medium text-slate-500">Type</span>
                                     <span className="text-sm font-medium text-slate-900">{selectedLease.type}</span>
                                 </div>

@@ -60,7 +60,7 @@ export const OwnerDashboard = () => {
                     },
                     {
                         label: 'Monthly Revenue',
-                        value: `₹ ${data.monthlyRevenue ? data.monthlyRevenue.toLocaleString() : '0'}`,
+                        value: `$ ${data.monthlyRevenue ? data.monthlyRevenue.toLocaleString('en-CA') : '0'}`,
                         icon: CircleDollarSign,
                         color: 'text-violet-600',
                         bg: 'bg-violet-50',
@@ -69,7 +69,7 @@ export const OwnerDashboard = () => {
                     },
                     {
                         label: 'Outstanding Dues',
-                        value: `₹ ${data.outstandingDues ? data.outstandingDues.toLocaleString() : '0'}`,
+                        value: `$ ${data.outstandingDues ? data.outstandingDues.toLocaleString('en-CA') : '0'}`,
                         icon: AlertCircle,
                         color: 'text-rose-600',
                         bg: 'bg-rose-50',
@@ -168,11 +168,11 @@ export const OwnerDashboard = () => {
                                     {recentFinancials.map((row, idx) => (
                                         <tr key={idx} className="hover:bg-white transition-colors group">
                                             <td className="px-6 py-4 text-xs font-black text-slate-700 italic">{row.month}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-slate-400 text-right font-mono">₹{row.expected.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-sm font-black text-slate-800 text-right font-mono italic">₹{row.collected.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-slate-400 text-right font-mono">${row.expected.toLocaleString('en-CA')}</td>
+                                            <td className="px-6 py-4 text-sm font-black text-slate-800 text-right font-mono italic">${row.collected.toLocaleString('en-CA')}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${row.dues > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                    {row.dues > 0 ? `₹${row.dues.toLocaleString()}` : 'CLEAR'}
+                                                    {row.dues > 0 ? `$${row.dues.toLocaleString('en-CA')}` : 'CLEAR'}
                                                 </span>
                                             </td>
                                         </tr>

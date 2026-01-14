@@ -46,7 +46,7 @@ export const PropertyDetail = () => {
                 </Card>
                 <Card className="p-4 text-center">
                     <div className="text-slate-500 text-sm">Revenue (YTD)</div>
-                    <div className="text-2xl font-bold text-slate-900">₹ {property.revenue.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-slate-900">$ {property.revenue.toLocaleString('en-CA')}</div>
                 </Card>
             </div>
 

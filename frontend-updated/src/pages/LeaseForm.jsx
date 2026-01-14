@@ -198,7 +198,7 @@ export const LeaseForm = () => {
 
           {/* Financials */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Monthly Rent</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Monthly Rent ($)</label>
             <div className="relative">
               <DollarSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -211,7 +211,7 @@ export const LeaseForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Security Deposit</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Security Deposit ($)</label>
             <div className="relative">
               <Shield size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
