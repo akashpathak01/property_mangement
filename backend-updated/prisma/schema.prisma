@@ -36,6 +36,7 @@ model User {
 
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  refundAdjustments RefundAdjustment[]
 }
 
 model RefreshToken {
@@ -78,6 +79,7 @@ model Unit {
   updatedAt   DateTime   @updatedAt
   leases      Lease[]
   invoices    Invoice[]
+  refundAdjustments RefundAdjustment[]
 }
 
 model Lease {
@@ -232,6 +234,19 @@ model Tax {
   updatedAt DateTime  @updatedAt
 
   @@map("Taxes")
+}
+
+model Account {
+  id             Int      @id @default(autoincrement())
+  accountName    String
+  assetType      String
+  openingBalance Decimal  @default(0.00) @db.Decimal(10, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("Accounts")
+}
+
 model RefundAdjustment {
   id        Int      @id @default(autoincrement())
   requestId String   @unique // RA-001 etc

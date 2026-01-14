@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
-import { FiPlus, FiEdit, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiX, FiTrash2 } from 'react-icons/fi';
+import api from '../api/client';
 
 export const ChartOfAccounts = () => {
   const [filter, setFilter] = useState('All');
@@ -13,14 +14,20 @@ export const ChartOfAccounts = () => {
     balance: '',
   });
 
-  const [accounts, setAccounts] = useState([
-    { name: 'Cash', type: 'Asset', balance: 120000 },
-    { name: 'Bank Account', type: 'Asset', balance: 450000 },
-    { name: 'Rental Income', type: 'Income', balance: 820000 },
-    { name: 'Service Fees', type: 'Income', balance: 45000 },
-    { name: 'Maintenance Expense', type: 'Expense', balance: 56000 },
-    { name: 'Utilities Expense', type: 'Expense', balance: 32000 },
-  ]);
+  const [accounts, setAccounts] = useState([]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  const fetchAccounts = async () => {
+    try {
+      const res = await api.get('/admin/accounts');
+      setAccounts(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const openAddModal = () => {
     setEditIndex(null);
@@ -34,21 +41,41 @@ export const ChartOfAccounts = () => {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.balance) {
       alert('Please fill all fields');
       return;
     }
 
-    if (editIndex !== null) {
-      const updated = [...accounts];
-      updated[editIndex] = form;
-      setAccounts(updated);
-    } else {
-      setAccounts([...accounts, form]);
-    }
+    try {
+      const payload = {
+        accountName: form.name,
+        assetType: form.type,
+        openingBalance: form.balance
+      };
 
-    setShowModal(false);
+      if (editIndex !== null) {
+        const accountId = accounts[editIndex].id;
+        await api.patch(`/admin/accounts/${accountId}`, payload);
+      } else {
+        await api.post('/admin/accounts', payload);
+      }
+
+      fetchAccounts();
+      setShowModal(false);
+    } catch (e) {
+      alert('Error saving account');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this account?')) return;
+    try {
+      await api.delete(`/admin/accounts/${id}`);
+      fetchAccounts();
+    } catch (e) {
+      alert('Error deleting account');
+    }
   };
 
   const filteredAccounts =
@@ -96,16 +123,28 @@ export const ChartOfAccounts = () => {
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-base font-semibold text-slate-900">{acc.name}</h3>
-                <button
-                  className="bg-none border-none cursor-pointer text-slate-500 text-base transition-colors duration-200 hover:text-indigo-600"
-                  onClick={() => openEditModal(acc, index)}
-                >
-                  <FiEdit />
-                </button>
+                <div className="flex gap-1.5 items-center">
+                  <button
+                    className="bg-none border-none cursor-pointer text-slate-500 text-base transition-colors duration-200 hover:text-indigo-600"
+                    onClick={() => openEditModal({
+                      name: acc.accountName,
+                      type: acc.assetType,
+                      balance: acc.openingBalance
+                    }, index)}
+                  >
+                    <FiEdit />
+                  </button>
+                  <button
+                    className="bg-none border-none cursor-pointer text-slate-500 text-base transition-colors duration-200 hover:text-red-600"
+                    onClick={() => handleDelete(acc.id)}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
               </div>
 
-              <p className="text-[13px] text-slate-500 mt-1.5">{acc.type}</p>
-              <h2 className="text-[22px] font-bold my-2.5 text-slate-900">$ {Number(acc.balance).toLocaleString('en-CA')}</h2>
+              <p className="text-[13px] text-slate-500 mt-1.5">{acc.assetType}</p>
+              <h2 className="text-[22px] font-bold my-2.5 text-slate-900">$ {Number(acc.openingBalance).toLocaleString('en-CA')}</h2>
 
               {/* MINI TREND BAR */}
               <div className="flex gap-1 items-end h-[30px]">
