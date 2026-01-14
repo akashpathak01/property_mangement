@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
+import { Trash2, Edit } from 'lucide-react';
 import api from '../api/client';
 
 export const TaxSettings = () => {
@@ -11,24 +12,16 @@ export const TaxSettings = () => {
   useEffect(() => {
     const fetchTaxes = async () => {
       try {
-        const res = await api.get('/admin/settings');
-        const s = res.data.settings || {};
-        if (s.tax_configuration) {
-          setTaxes(JSON.parse(s.tax_configuration));
-        } else {
-          // Default init if empty
-          setTaxes([
-            { name: 'GST', rate: 18, appliesTo: 'Rent', status: 'active' },
-            { name: 'Service Tax', rate: 5, appliesTo: 'Maintenance', status: 'inactive' },
-            { name: 'VAT', rate: 12, appliesTo: 'Utilities', status: 'active' },
-          ]);
-        }
+        const res = await api.get('/admin/taxes');
+        setTaxes(res.data);
       } catch (e) { console.error(e); }
     };
     fetchTaxes();
   }, []);
 
   const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -42,32 +35,62 @@ export const TaxSettings = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const persistTaxes = async (newTaxes) => {
-    setTaxes(newTaxes);
+  const persistTaxes = async (payload) => {
     try {
-      await api.post('/admin/settings', {
-        tax_configuration: newTaxes // Controller handles JSON.stringify
-      });
+      const res = await api.post('/admin/taxes', payload);
+      setTaxes(res.data);
     } catch (e) { alert('Error saving taxes'); }
   };
 
-  const handleSave = () => {
+  const handleEditClick = (tax) => {
+    setForm({
+      name: tax.name,
+      rate: tax.rate,
+      appliesTo: tax.appliesTo,
+      status: tax.status,
+    });
+    setEditingId(tax.id);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
     if (!form.name || !form.rate) {
       alert('Please fill all required fields');
       return;
     }
 
-    const newTaxes = [...taxes, form];
-    persistTaxes(newTaxes);
+    try {
+      if (isEditing) {
+        const res = await api.patch(`/admin/taxes/${editingId}`, form);
+        setTaxes(taxes.map(t => t.id === editingId ? res.data : t));
+      } else {
+        const res = await api.post('/admin/taxes', form); // Changed to post single form, not array
+        setTaxes([...taxes, res.data]); // Add new tax to existing list
+      }
 
-    setForm({
-      name: '',
-      rate: '',
-      appliesTo: 'Rent',
-      status: 'active',
-    });
+      setForm({
+        name: '',
+        rate: '',
+        appliesTo: 'Rent',
+        status: 'active',
+      });
+      setShowModal(false);
+      setIsEditing(false);
+      setEditingId(null);
+    } catch (e) {
+      alert('Error saving tax');
+    }
+  };
 
-    setShowModal(false);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this tax?')) return;
+    try {
+      await api.delete(`/admin/taxes/${id}`);
+      setTaxes(taxes.filter(t => t.id !== id));
+    } catch (e) {
+      alert('Error deleting tax');
+    }
   };
 
   /* ---------------- UI ---------------- */
@@ -95,7 +118,11 @@ export const TaxSettings = () => {
 
         {/* ADD BUTTON */}
         <div className="flex justify-end">
-          <button className="bg-indigo-600 text-white border-none py-2.5 px-4 rounded-lg cursor-pointer transition-colors hover:bg-indigo-700 font-medium text-sm" onClick={() => setShowModal(true)}>
+          <button className="bg-indigo-600 text-white border-none py-2.5 px-4 rounded-lg cursor-pointer transition-colors hover:bg-indigo-700 font-medium text-sm" onClick={() => {
+            setForm({ name: '', rate: '', appliesTo: 'Rent', status: 'active' });
+            setIsEditing(false);
+            setShowModal(true);
+          }}>
             + Add New Tax
           </button>
         </div>
@@ -109,6 +136,7 @@ export const TaxSettings = () => {
                 <th className="text-left p-3.5 bg-slate-50 text-[13px] text-slate-500 font-semibold border-b border-gray-100">Rate (%)</th>
                 <th className="text-left p-3.5 bg-slate-50 text-[13px] text-slate-500 font-semibold border-b border-gray-100">Applies To</th>
                 <th className="text-left p-3.5 bg-slate-50 text-[13px] text-slate-500 font-semibold border-b border-gray-100">Status</th>
+                <th className="text-right p-3.5 bg-slate-50 text-[13px] text-slate-500 font-semibold border-b border-gray-100 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -123,17 +151,34 @@ export const TaxSettings = () => {
                       {tax.status}
                     </span>
                   </td>
+                  <td className="p-3.5 border-t border-gray-100 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => handleEditClick(tax)}
+                        className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        title="Edit Tax"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tax.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        title="Delete Tax"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* MODAL */}
         {showModal && (
           <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-[999]">
             <div className="bg-white w-[420px] rounded-2xl p-6 animate-[zoomIn_0.3s_ease]">
-              <h3 className="mb-4 text-base font-semibold text-slate-900">Add New Tax</h3>
+              <h3 className="mb-4 text-base font-semibold text-slate-900">{isEditing ? 'Edit Tax' : 'Add New Tax'}</h3>
 
               <div className="flex flex-col gap-3">
                 <input

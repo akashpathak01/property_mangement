@@ -21,6 +21,7 @@ const leaseController = require('./lease.controller');
 const insuranceController = require('./insurance.controller');
 const reportsController = require('./reports.controller');
 const settingsController = require('./settings.controller');
+const taxController = require('./tax.controller');
 
 router.get('/dashboard/stats', adminController.getDashboardStats);
 router.get('/owners', adminController.getOwners);
@@ -64,5 +65,10 @@ router.get('/reports', reportsController.getReports);
 
 router.get('/settings', settingsController.getSettings);
 router.post('/settings', settingsController.updateSettings);
+
+router.get('/taxes', taxController.getTaxes);
+router.post('/taxes', taxController.updateTaxes);
+router.patch('/taxes/:id', taxController.updateTax);
+router.delete('/taxes/:id', taxController.deleteTax);
 
 module.exports = router;
