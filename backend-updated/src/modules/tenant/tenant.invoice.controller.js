@@ -6,11 +6,13 @@ exports.getInvoices = async (req, res) => {
         const userId = req.user.id;
 
         // Find invoices where tenantId matches
-        // Show everything except 'draft'
+        // User Requirement: "status != PAID" explicitly
         const invoices = await prisma.invoice.findMany({
             where: {
                 tenantId: userId,
-                status: { not: 'draft' }
+                status: {
+                    notIn: ['draft', 'Paid', 'paid']
+                }
             },
             orderBy: { createdAt: 'desc' },
             include: { unit: true }
@@ -23,6 +25,7 @@ exports.getInvoices = async (req, res) => {
             if (s === 'paid') statusDisplay = 'Paid';
             else if (s === 'overdue') statusDisplay = 'Overdue';
             else if (s === 'sent') statusDisplay = 'Due';
+            else if (s === 'unpaid') statusDisplay = 'Due'; // Map Unpaid -> Due for Frontend
             else statusDisplay = s.charAt(0).toUpperCase() + s.slice(1);
 
             return {

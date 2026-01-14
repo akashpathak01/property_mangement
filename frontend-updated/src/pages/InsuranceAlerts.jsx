@@ -314,18 +314,25 @@ export const InsuranceAlerts = () => {
                                 </div>
 
                                 <div className="pt-4 flex flex-col gap-3">
-                                    <button className="flex items-center justify-between w-full p-5 rounded-3xl border-2 border-slate-100 hover:border-primary-200 hover:bg-primary-50 transition-all group">
+                                    <a
+                                        href={viewPolicy.documentUrl ? `${api.defaults.baseURL.replace('/api', '')}${viewPolicy.documentUrl}` : '#'}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className={`flex items-center justify-between w-full p-5 rounded-3xl border-2 border-slate-100 hover:border-primary-200 hover:bg-primary-50 transition-all group ${!viewPolicy.documentUrl && 'pointer-events-none opacity-50'}`}
+                                    >
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-white shadow-sm border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary-600 group-hover:border-primary-100">
                                                 <FileText size={20} />
                                             </div>
                                             <div className="text-left">
-                                                <p className="text-sm font-black text-slate-700 tracking-tight group-hover:text-primary-700 transition-colors">Certificate_of_Insurance.pdf</p>
+                                                <p className="text-sm font-black text-slate-700 tracking-tight group-hover:text-primary-700 transition-colors">
+                                                    {viewPolicy.documentUrl ? 'Certificate_of_Insurance.pdf' : 'No Document Attached'}
+                                                </p>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Uploaded on {viewPolicy.startDate}</p>
                                             </div>
                                         </div>
                                         <Eye size={20} className="text-slate-300 group-hover:text-primary-500 transition-colors" />
-                                    </button>
+                                    </a>
                                 </div>
 
                                 <div className="pt-4 grid grid-cols-2 gap-4">

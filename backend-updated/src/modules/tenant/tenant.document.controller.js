@@ -1,8 +1,5 @@
 const prisma = require('../../config/prisma');
 
-const path = require('path');
-const fs = require('fs');
-
 // GET /api/tenant/documents
 exports.getDocuments = async (req, res) => {
     try {
@@ -23,50 +20,6 @@ exports.getDocuments = async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: 'Server error' });
-    }
-};
-
-// GET /api/tenant/documents/:id/file
-exports.getDocumentFile = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const userRole = req.user.role;
-        const docId = parseInt(req.params.id);
-
-        const doc = await prisma.document.findUnique({
-            where: { id: docId }
-        });
-
-        if (!doc) {
-            return res.status(404).json({ message: 'Document not found' });
-        }
-
-        // Security Check: Only Owner or Admin
-        if (doc.userId !== userId && userRole !== 'ADMIN') {
-            return res.status(403).json({ message: 'Unauthorized access' });
-        }
-
-        // Construct absolute path
-        // Database stores '/uploads/filename', we need system path
-        // Assume fileUrl starts with '/uploads/'
-        const relativePath = doc.fileUrl.startsWith('/') ? doc.fileUrl.slice(1) : doc.fileUrl; // removes leading slash
-        const filePath = path.resolve(__dirname, '../../../../', relativePath);
-
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ message: 'File not found on server' });
-        }
-
-        // Action: View or Download
-        const action = req.query.action || 'view';
-        if (action === 'download') {
-            res.download(filePath, doc.name); // Send with original friendly name
-        } else {
-            res.sendFile(filePath);
-        }
-
-    } catch (e) {
-        console.error('File Access Error:', e);
-        res.status(500).json({ message: 'Error retrieving file' });
     }
 };
 
