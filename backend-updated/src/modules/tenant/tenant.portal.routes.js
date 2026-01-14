@@ -20,7 +20,7 @@ router.use(authorize("TENANT"));
 router.get("/dashboard", tenantPortalController.getDashboard);
 router.get("/lease", tenantLeaseController.getLeaseDetails);
 router.get("/documents", tenantDocumentController.getDocuments);
-router.post("/documents", upload.single('file'), tenantDocumentController.uploadDocument);
+router.post("/documents", tenantDocumentController.uploadDocument);
 
 router.get("/tickets", tenantTicketController.getTickets);
 router.post("/tickets", tenantTicketController.createTicket);

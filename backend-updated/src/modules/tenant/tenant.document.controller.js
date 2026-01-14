@@ -1,4 +1,5 @@
 const prisma = require('../../config/prisma');
+const { uploadToCloudinary } = require('../../config/cloudinary');
 
 // GET /api/tenant/documents
 exports.getDocuments = async (req, res) => {
@@ -27,22 +28,24 @@ exports.getDocuments = async (req, res) => {
 exports.uploadDocument = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, type } = req.body;
+        const { friendlyName, documentType } = req.body;
 
-        if (!req.file) {
+        if (!req.files || !req.files.file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        // Create document record with real file path
-        // We store the relative path: /uploads/filename
-        const fileUrl = `/uploads/${req.file.filename}`;
+        const file = req.files.file;
+
+        // Upload to Cloudinary
+        // Note: cloudConfig ensures temp file is deleted after upload
+        const result = await uploadToCloudinary(file.tempFilePath, 'tenant_documents');
 
         const newDoc = await prisma.document.create({
             data: {
                 userId,
-                name: name || req.file.originalname,
-                type: type || 'Other',
-                fileUrl: fileUrl,
+                name: friendlyName || file.name,
+                type: documentType || 'Other',
+                fileUrl: result.secure_url,
                 expiryDate: null
             }
         });
@@ -56,7 +59,7 @@ exports.uploadDocument = async (req, res) => {
         });
 
     } catch (e) {
-        console.error(e);
+        console.error('Document Upload Error:', e);
         res.status(500).json({ message: 'Error uploading document' });
     }
 };

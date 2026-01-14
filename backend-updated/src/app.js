@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const fileUpload = require('express-fileupload');
 const routes = require('./routes');
 
 const app = express();
@@ -11,6 +12,13 @@ app.use(helmet());
 app.use(cors()); // Configure this properly for production later
 app.use(express.json());
 app.use(morgan('dev'));
+
+// File Upload Middleware
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+}));
 
 // Routes
 app.use('/api', routes);
