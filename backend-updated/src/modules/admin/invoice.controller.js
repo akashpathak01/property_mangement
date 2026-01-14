@@ -98,7 +98,7 @@ exports.createInvoice = async (req, res) => {
 // PUT /api/admin/invoices/:id (Update status or details)
 exports.updateInvoice = async (req, res) => {
     try {
-        const { status, month, rent, serviceFees } = req.body;
+        const { status, month, rent, serviceFees, paymentMethod } = req.body;
         const id = parseInt(req.params.id);
 
         // Fetch existing to get current values if not provided?
@@ -106,7 +106,13 @@ exports.updateInvoice = async (req, res) => {
         // We need to recalc amount if rent/fees change.
 
         const data = {};
-        if (status) data.status = status;
+        if (status) {
+            data.status = status;
+            if (status.toLowerCase() === 'paid') {
+                data.paidAt = new Date(); // Set paid date to now
+                if (paymentMethod) data.paymentMethod = paymentMethod;
+            }
+        }
         if (month) data.month = month;
 
         let newRent = rent;

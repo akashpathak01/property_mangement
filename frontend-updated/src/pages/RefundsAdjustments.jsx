@@ -1,41 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
 import { Eye, X } from 'lucide-react';
 import { Button } from '../components/Button';
+import api from '../api/client';
 
 const RefundsAdjustments = () => {
-  const [records] = useState([
-    {
-      id: 'RA-001',
-      type: 'Refund',
-      reason: 'Security Deposit Refund',
-      tenant: 'John Doe',
-      unit: 'Unit 301',
-      amount: 25000,
-      date: '15 Apr 2026',
-      status: 'Completed',
-    },
-    {
-      id: 'RA-002',
-      type: 'Adjustment',
-      reason: 'Rent Discount',
-      tenant: 'Aman Verma',
-      unit: 'Unit 301 – Bedroom 2',
-      amount: -2000,
-      date: '18 Apr 2026',
-      status: 'Applied',
-    },
-    {
-      id: 'RA-003',
-      type: 'Refund',
-      reason: 'Overpayment Refund',
-      tenant: 'XYZ Logistics Pvt Ltd',
-      unit: 'Unit 202',
-      amount: 5000,
-      date: '20 Apr 2026',
-      status: 'Pending',
-    },
-  ]);
+  const [records, setRecords] = useState([]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, []);
+
+  const fetchRecords = async () => {
+    try {
+      const response = await api.get('/admin/refunds');
+      setRecords(response.data);
+    } catch (error) {
+      console.error('Error fetching refunds:', error);
+    }
+  };
 
   const [selected, setSelected] = useState(null);
 
