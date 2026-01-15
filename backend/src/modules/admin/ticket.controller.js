@@ -1,9 +1,18 @@
 const prisma = require('../../config/prisma');
+const https = require('https');
 
 // GET /api/admin/tickets
 exports.getAllTickets = async (req, res) => {
     try {
+        const { userId } = req.query;
+
+        const where = {};
+        if (userId) {
+            where.userId = parseInt(userId);
+        }
+
         const tickets = await prisma.ticket.findMany({
+            where,
             include: {
                 user: {
                     include: {
@@ -30,12 +39,17 @@ exports.getAllTickets = async (req, res) => {
                 tenant: t.user.name || 'Unknown',
                 unit: unitInfo,
                 subject: t.subject,
+                category: t.category,
                 priority: t.priority,
                 status: t.status,
                 desc: t.description,
                 createdAt: t.createdAt.toLocaleString(),
-                // Attachments mock
-                attachments: [],
+                date: t.createdAt.toISOString().split('T')[0], // For frontend consistency
+                // Attachments
+                attachments: t.attachmentUrls ? JSON.parse(t.attachmentUrls).map((att, idx) => ({
+                    ...att,
+                    proxyUrl: `/api/admin/tickets/${t.id}/attachments/${idx}`
+                })) : [],
                 tenantDetails: {
                     name: t.user.name,
                     property: activeLease ? activeLease.unit.property.name : 'N/A',
@@ -94,6 +108,7 @@ exports.createTicket = async (req, res) => {
                 subject,
                 description,
                 priority,
+                category: req.body.category,
                 status: 'Open',
                 propertyId: propertyId ? parseInt(propertyId) : null,
                 unitId: unitId ? parseInt(unitId) : null
@@ -104,5 +119,50 @@ exports.createTicket = async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: 'Error creating ticket' });
+    }
+};
+
+// GET /api/admin/tickets/:ticketId/attachments/:attachmentId
+exports.getTicketAttachment = async (req, res) => {
+    try {
+        const { ticketId, attachmentId } = req.params;
+        const ticket = await prisma.ticket.findUnique({
+            where: { id: parseInt(ticketId) }
+        });
+
+        if (!ticket || !ticket.attachmentUrls) {
+            return res.status(404).json({ message: 'Attachment not found' });
+        }
+
+        const attachments = JSON.parse(ticket.attachmentUrls);
+        const attachment = attachments[parseInt(attachmentId)];
+
+        if (!attachment || !attachment.url) {
+            return res.status(404).json({ message: 'Attachment not found' });
+        }
+
+        // Proxy the file from Cloudinary 
+        https.get(attachment.url, (response) => {
+            if (response.statusCode !== 200) {
+                return res.status(response.statusCode).json({ message: 'Failed to fetch attachment from storage' });
+            }
+
+            // Trust Cloudinary's content type or guess based on type
+            const contentType = response.headers['content-type'] || (attachment.type === 'image' ? 'image/jpeg' : 'application/octet-stream');
+
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Length', response.headers['content-length']);
+            // Force inline display for previewable types
+            res.setHeader('Content-Disposition', 'inline');
+
+            response.pipe(res);
+        }).on('error', (err) => {
+            console.error('Attachment Proxy Error:', err);
+            res.status(500).json({ message: 'Error proxying attachment' });
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Server error' });
     }
 };

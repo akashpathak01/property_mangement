@@ -77,17 +77,39 @@ export const TenantDocuments = () => {
     };
 
     const handleView = (url) => {
-        // Backend url is relative /uploads/..., we need full url usually
-        // Assuming backend is on same host or proxied? 
-        // We might need base URL if separated. 
-        // For now, assume relative works if key is correct or construct it.
-        // Usually api client might have base url.
-        // Let's assume absolute path from server 'http://localhost:5000/uploads/...'
-        // or just window.open(api.defaults.baseURL + url)
+        // If it is a cloudinary URL (absolute), open as is
+        if (url.startsWith('http')) {
+            window.open(url, '_blank');
+        } else {
+            const baseUrl = api.defaults.baseURL.replace('/api', '');
+            window.open(`${baseUrl}${url}`, '_blank');
+        }
+    };
 
-        // Quick fix: construct url
-        const baseUrl = api.defaults.baseURL.replace('/api', '');
-        window.open(`${baseUrl}${url}`, '_blank');
+    const handleDownload = async (docId, fileName) => {
+        try {
+            // We use standard window.open or a hidden anchor for download to trigger browser download
+            const downloadUrl = `${api.defaults.baseURL}/tenant/documents/${docId}/download`;
+
+            // To pass auth token if needed, usually better to fetch but if it's a simple GET with token in header, 
+            // window.open won't send headers. 
+            // In this app, auth might be via cookie or we might need to fetch blob.
+            // Let's fetch as blob to ensure auth header is sent.
+            const response = await api.get(`/tenant/documents/${docId}/download`, {
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (e) {
+            console.error('Download failed', e);
+            alert('Could not download file');
+        }
     };
 
     return (
@@ -139,18 +161,17 @@ export const TenantDocuments = () => {
                                                         <button
                                                             onClick={() => handleView(doc.fileUrl)}
                                                             className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                                                            title="View Document"
                                                         >
                                                             <Eye size={20} />
                                                         </button>
-                                                        <a
-                                                            href={`${api.defaults.baseURL.replace('/api', '')}${doc.fileUrl}`}
-                                                            download
-                                                            target="_blank"
-                                                            rel="noreferrer"
+                                                        <button
+                                                            onClick={() => handleDownload(doc.id, doc.name)}
                                                             className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                            title="Download PDF"
                                                         >
                                                             <Download size={20} />
-                                                        </a>
+                                                        </button>
                                                     </>
                                                 )}
                                             </div>

@@ -539,10 +539,32 @@ const TenantDetail = ({ tenant, onBack }) => {
   const [leases, setLeases] = useState([
     { id: 1, type: 'Full Unit', unit: tenant.unit, startDate: '2024-01-01', endDate: '2024-12-31', rent: '$1,200', status: 'Expired' }
   ]);
-  const [tickets, setTickets] = useState([
-    { id: 1001, title: 'Leaking Faucet', category: 'Plumbing', priority: 'Medium', status: 'Open', date: '2026-01-05' },
-    { id: 1002, title: 'AC Filter Replacement', category: 'HVAC', priority: 'Low', status: 'In Progress', date: '2026-01-06' },
-  ]);
+  const [tickets, setTickets] = useState([]);
+
+  useEffect(() => {
+    if (tenant?.id) {
+      fetchTickets();
+    }
+  }, [tenant?.id]);
+
+  const fetchTickets = async () => {
+    try {
+      const res = await api.get(`/admin/tickets?userId=${tenant.id}`);
+      // Map backend fields to frontend UI expectations if needed
+      const mapped = res.data.map(t => ({
+        id: t.id, // e.g. T-1001
+        dbId: t.dbId,
+        title: t.subject,
+        category: t.category || 'General',
+        priority: t.priority,
+        status: t.status,
+        date: t.date
+      }));
+      setTickets(mapped);
+    } catch (e) {
+      console.error("Failed to fetch tickets", e);
+    }
+  };
 
   // Modals state
   const [showAddInsurance, setShowAddInsurance] = useState(false);
@@ -639,19 +661,26 @@ const TenantDetail = ({ tenant, onBack }) => {
     setShowAddDocument(false);
   };
 
-  const handleSaveTicket = (e) => {
+  const handleSaveTicket = async (e) => {
     e.preventDefault();
     const form = e.target;
-    const newTicket = {
-      id: Date.now(),
-      title: form.title.value,
-      category: form.category.value,
-      priority: form.priority.value,
-      status: 'Open',
-      date: new Date().toISOString().split('T')[0]
-    };
-    setTickets([newTicket, ...tickets]);
-    setShowAddTicket(false);
+    try {
+      const payload = {
+        tenantId: tenant.id,
+        subject: form.title.value,
+        category: form.category.value,
+        priority: form.priority.value,
+        description: `Created via Admin Portal for ${tenant.name}`,
+        propertyId: tenant.propertyId,
+        unitId: tenant.unitId
+      };
+      await api.post('/admin/tickets', payload);
+      fetchTickets(); // Refresh list
+      setShowAddTicket(false);
+    } catch (e) {
+      console.error("Failed to save ticket", e);
+      alert("Error creating ticket");
+    }
   };
 
   const handleSaveLease = (e) => {
@@ -1217,7 +1246,21 @@ const TenantDetail = ({ tenant, onBack }) => {
                     <FileText size={18} className="text-indigo-600" />
                     <span className="text-sm font-medium text-indigo-900">{viewingPolicy.document}</span>
                   </div>
-                  <button className="text-indigo-600 hover:text-indigo-800 transition-all">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await api.get(`/admin/leases/${tenant.id}/download`, { responseType: 'blob' });
+                        const url = window.URL.createObjectURL(new Blob([res.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `insurance-${viewingPolicy.id}.pdf`);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                      } catch (e) { alert('Download failed'); }
+                    }}
+                    className="text-indigo-600 hover:text-indigo-800 transition-all"
+                  >
                     <Download size={18} />
                   </button>
                 </div>
@@ -1295,7 +1338,25 @@ const TenantDetail = ({ tenant, onBack }) => {
                   <p className="text-sm text-slate-500">{viewingDoc.type} • Uploaded on {viewingDoc.date}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" className="gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-2"
+                    onClick={async () => {
+                      try {
+                        // If it's a lease agreement, use the lease download API
+                        const endpoint = viewingDoc.type === 'Agreement' ? `/admin/leases/${tenant.id}/download` : `/admin/invoices/${tenant.id}/download`;
+                        const res = await api.get(endpoint, { responseType: 'blob' });
+                        const url = window.URL.createObjectURL(new Blob([res.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `${viewingDoc.name}`);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                      } catch (e) { alert('Download failed'); }
+                    }}
+                  >
                     <Download size={16} />
                     Download
                   </Button>

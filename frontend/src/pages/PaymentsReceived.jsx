@@ -20,6 +20,27 @@ const PaymentsReceived = () => {
     }
   };
 
+  const handleRefund = async (payment) => {
+    const reason = window.prompt(`Enter reason for refunding ${payment.id}:`, 'Security Deposit Refund');
+    if (!reason) return;
+
+    try {
+      await api.post('/admin/refunds', {
+        type: 'Refund',
+        reason: reason,
+        tenantId: payment.tenantId,
+        unitId: payment.unitId,
+        amount: payment.amount,
+        status: 'Completed',
+        date: new Date()
+      });
+      alert('Refund recorded successfully');
+    } catch (error) {
+      console.error('Refund failed:', error);
+      alert('Failed to record refund');
+    }
+  };
+
   const [selectedPayment, setSelectedPayment] = useState(null);
 
   return (
@@ -59,7 +80,11 @@ const PaymentsReceived = () => {
                       <button onClick={() => setSelectedPayment(p)} className="p-1.5 text-slate-500 hover:text-primary-600 hover:bg-slate-100 rounded-md transition-colors">
                         <Eye size={16} />
                       </button>
-                      <button title="Refund (future)" className="p-1.5 text-slate-500 hover:text-orange-600 hover:bg-slate-100 rounded-md transition-colors">
+                      <button
+                        onClick={() => handleRefund(p)}
+                        title="Refund"
+                        className="p-1.5 text-slate-500 hover:text-orange-600 hover:bg-slate-100 rounded-md transition-colors"
+                      >
                         <RotateCcw size={16} />
                       </button>
                     </div>
@@ -98,7 +123,21 @@ const PaymentsReceived = () => {
                 <Button variant="secondary" onClick={() => setSelectedPayment(null)}>
                   Close
                 </Button>
-                <Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      // selectedPayment.id is invoiceNo in this view (based on getReceivedPayments mapping)
+                      const res = await api.get(`/admin/payments/${selectedPayment.id}/download`, { responseType: 'blob' });
+                      const url = window.URL.createObjectURL(new Blob([res.data]));
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', `receipt-${selectedPayment.id}.pdf`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                    } catch (e) { alert('Download failed'); }
+                  }}
+                >
                   Download Receipt
                 </Button>
               </div>

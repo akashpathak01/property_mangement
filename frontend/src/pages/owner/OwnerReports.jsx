@@ -96,7 +96,23 @@ export const OwnerReports = () => {
                                         <button className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-transparent hover:border-indigo-100">
                                             <ExternalLink size={18} />
                                         </button>
-                                        <Button variant="secondary" className="gap-2 h-11 px-6 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border-2">
+                                        <Button
+                                            variant="secondary"
+                                            className="gap-2 h-11 px-6 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border-2"
+                                            onClick={async () => {
+                                                try {
+                                                    // Placeholder for report download - connecting to a potential endpoint
+                                                    const res = await api.get(`/admin/reports/${report.id || idx}/download`, { responseType: 'blob' });
+                                                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                                                    const link = document.createElement('a');
+                                                    link.href = url;
+                                                    link.setAttribute('download', `${report.title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    link.remove();
+                                                } catch (e) { alert('Report download failed'); }
+                                            }}
+                                        >
                                             <Download size={16} />
                                             Export
                                         </Button>

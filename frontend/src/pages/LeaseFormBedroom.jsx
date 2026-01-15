@@ -12,6 +12,7 @@ export const LeaseFormBedroom = () => {
     const [selectedBuilding, setSelectedBuilding] = useState('');
     const [form, setForm] = useState({
         unitId: '',
+        tenantId: '',
         tenantName: '',
         startDate: '',
         endDate: '',
@@ -40,6 +41,7 @@ export const LeaseFormBedroom = () => {
         setForm({
             ...form,
             unitId: '',
+            tenantId: '',
             tenantName: '',
             monthlyRent: '',
             securityDeposit: '',
@@ -71,15 +73,19 @@ export const LeaseFormBedroom = () => {
 
     const handleUnitChange = async (e) => {
         const unitId = e.target.value;
-        setForm({ ...form, unitId, tenantName: '' });
+        setForm({ ...form, unitId, tenantId: '', tenantName: '' });
 
         if (unitId) {
             try {
                 const res = await api.get(`/admin/leases/active/${unitId}`);
                 if (res.data) {
-                    setForm(prev => ({ ...prev, tenantName: res.data.tenantName }));
+                    setForm(prev => ({
+                        ...prev,
+                        tenantId: res.data.tenantId,
+                        tenantName: res.data.tenantName
+                    }));
                 } else {
-                    setForm(prev => ({ ...prev, tenantName: 'No Active Tenant' }));
+                    setForm(prev => ({ ...prev, tenantId: '', tenantName: 'No Active Tenant' }));
                 }
             } catch (error) {
                 console.error('Failed to fetch active lease', error);

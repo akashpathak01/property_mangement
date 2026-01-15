@@ -75,7 +75,21 @@ export const TenantInvoices = () => {
                                                 >
                                                     <Eye size={18} />
                                                 </button>
-                                                <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            const res = await api.get(`/tenant/invoices/${inv.dbId}/download`, { responseType: 'blob' });
+                                                            const url = window.URL.createObjectURL(new Blob([res.data]));
+                                                            const link = document.createElement('a');
+                                                            link.href = url;
+                                                            link.setAttribute('download', `invoice-${inv.id}.pdf`);
+                                                            document.body.appendChild(link);
+                                                            link.click();
+                                                            link.remove();
+                                                        } catch (e) { alert('Download failed'); }
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                >
                                                     <Download size={18} />
                                                 </button>
                                             </div>
@@ -148,7 +162,22 @@ export const TenantInvoices = () => {
                             </div>
 
                             <div className="flex gap-4">
-                                <Button variant="secondary" className="flex-1 rounded-2xl py-4 h-auto font-bold" onClick={() => setViewingInvoice(null)}>
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1 rounded-2xl py-4 h-auto font-bold"
+                                    onClick={async () => {
+                                        try {
+                                            const res = await api.get(`/tenant/invoices/${viewingInvoice.dbId}/download`, { responseType: 'blob' });
+                                            const url = window.URL.createObjectURL(new Blob([res.data]));
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.setAttribute('download', `invoice-${viewingInvoice.id}.pdf`);
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+                                        } catch (e) { alert('Download failed'); }
+                                    }}
+                                >
                                     Download PDF
                                 </Button>
                                 {viewingInvoice.status === 'Due' && (

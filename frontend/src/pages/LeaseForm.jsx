@@ -12,6 +12,7 @@ export const LeaseForm = () => {
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [form, setForm] = useState({
     unitId: '',
+    tenantId: '',
     tenantName: '',
     startDate: '',
     endDate: '',
@@ -37,7 +38,7 @@ export const LeaseForm = () => {
     const buildingId = e.target.value;
     setSelectedBuilding(buildingId);
     setUnits([]);
-    setForm({ ...form, unitId: '', tenantName: '' });
+    setForm({ ...form, unitId: '', tenantId: '', tenantName: '' });
     setIsTenantReadOnly(false);
 
     if (buildingId) {
@@ -64,14 +65,18 @@ export const LeaseForm = () => {
 
   const handleUnitChange = async (e) => {
     const unitId = e.target.value;
-    setForm({ ...form, unitId, tenantName: '' });
+    setForm({ ...form, unitId, tenantId: '', tenantName: '' });
     setIsTenantReadOnly(false);
 
     if (unitId) {
       try {
         const res = await api.get(`/admin/leases/active/${unitId}`);
         if (res.data) {
-          setForm(prev => ({ ...prev, tenantName: res.data.tenantName }));
+          setForm(prev => ({
+            ...prev,
+            tenantId: res.data.tenantId,
+            tenantName: res.data.tenantName
+          }));
           setIsTenantReadOnly(true);
         }
       } catch (error) {

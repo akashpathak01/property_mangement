@@ -10,7 +10,7 @@ exports.getAllTenants = async (req, res) => {
         if (propertyId) {
             whereClause.leases = {
                 some: {
-                    status: 'Active',
+                    status: { in: ['Active', 'DRAFT'] },
                     unit: { propertyId: parseInt(propertyId) }
                 }
             };
@@ -282,3 +282,27 @@ exports.updateTenant = async (req, res) => {
     }
 };
 
+// GET /api/admin/tenants/:id/tickets
+exports.getTenantTickets = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tickets = await prisma.ticket.findMany({
+            where: { userId: parseInt(id) },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const formatted = tickets.map(t => ({
+            id: t.id + 1000,
+            title: t.subject,
+            category: 'General', // Fallback as schema doesn't have category
+            priority: t.priority,
+            status: t.status,
+            date: t.createdAt.toISOString().split('T')[0]
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error('Fetch Tenant Tickets Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

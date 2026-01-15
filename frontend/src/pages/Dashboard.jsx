@@ -35,11 +35,13 @@ export const Dashboard = () => {
   }
 
   // Fallback to initial structure if API fails or returns partial
-  const { totalProperties, totalUnits, occupancy, monthlyRevenue, insuranceAlerts, recentActivity } = stats || {
+  const { totalProperties, totalUnits, occupancy, monthlyRevenue, projectedRevenue, actualRevenue, insuranceAlerts, recentActivity } = stats || {
     totalProperties: 0,
     totalUnits: 0,
     occupancy: { occupied: 0, vacant: 0 },
     monthlyRevenue: 0,
+    projectedRevenue: 0,
+    actualRevenue: 0,
     insuranceAlerts: { expired: 0, expiringSoon: 0 },
     recentActivity: []
   };
@@ -76,8 +78,13 @@ export const Dashboard = () => {
           </Card>
 
           <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1 border-l-[6px] border-indigo-500">
-            <span className="text-sm text-gray-500 tracking-wide">Monthly Revenue</span>
-            <h2 className="text-[2.2rem] font-bold mt-2 leading-tight">${monthlyRevenue.toLocaleString()}</h2>
+            <span className="text-sm text-gray-500 tracking-wide">Projected Revenue</span>
+            <h2 className="text-[2.2rem] font-bold mt-2 leading-tight">${(projectedRevenue || monthlyRevenue || 0).toLocaleString()}</h2>
+          </Card>
+
+          <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1 border-l-[6px] border-emerald-500">
+            <span className="text-sm text-gray-500 tracking-wide">Actual Revenue (YTD)</span>
+            <h2 className="text-[2.2rem] font-bold mt-2 leading-tight">${(actualRevenue || 0).toLocaleString()}</h2>
           </Card>
 
           <Card

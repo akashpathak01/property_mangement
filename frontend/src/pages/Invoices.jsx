@@ -320,7 +320,21 @@ export const Invoices = () => {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors border border-slate-200 bg-white">
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const res = await api.get(`/admin/invoices/${viewInvoice.id}/download`, { responseType: 'blob' });
+                                                const url = window.URL.createObjectURL(new Blob([res.data]));
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.setAttribute('download', `invoice-${viewInvoice.invoiceNo}.pdf`);
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                link.remove();
+                                            } catch (e) { alert('Download failed'); }
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors border border-slate-200 bg-white"
+                                    >
                                         <Download size={14} />
                                         Download PDF
                                     </button>

@@ -81,7 +81,7 @@ export const ChartOfAccounts = () => {
   const filteredAccounts =
     filter === 'All'
       ? accounts
-      : accounts.filter((a) => a.type === filter);
+      : accounts.filter((a) => a.assetType === filter);
 
   return (
     <MainLayout title="Company Chart of Accounts">
@@ -122,7 +122,7 @@ export const ChartOfAccounts = () => {
                 }`}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-base font-semibold text-slate-900">{acc.name}</h3>
+                <h3 className="text-base font-semibold text-slate-900">{acc.accountName}</h3>
                 <div className="flex gap-1.5 items-center">
                   <button
                     className="bg-none border-none cursor-pointer text-slate-500 text-base transition-colors duration-200 hover:text-indigo-600"

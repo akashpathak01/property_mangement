@@ -24,6 +24,8 @@ import api from '../api/client';
 
 export const RevenueDashboard = () => {
   const [stats, setStats] = useState({
+    actualRevenue: 0,
+    projectedRevenue: 0,
     totalRevenue: 0,
     monthlyRevenue: [],
     revenueByProperty: []
@@ -45,17 +47,16 @@ export const RevenueDashboard = () => {
 
         {/* TOP STATS */}
         <section className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
-          <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1">
-            <span className="text-sm text-gray-500">Total Revenue</span>
-            <h2 className="text-[2.1rem] font-bold mt-2 leading-tight">${stats.totalRevenue.toLocaleString('en-CA')}</h2>
-            <p className="mt-2 text-gray-700">All time</p>
+          <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1 border-l-[6px] border-emerald-500">
+            <span className="text-sm text-gray-500">Actual Revenue (Paid)</span>
+            <h2 className="text-[2.1rem] font-bold mt-2 leading-tight">${(stats.actualRevenue || stats.totalRevenue || 0).toLocaleString('en-CA')}</h2>
+            <p className="mt-2 text-gray-700">YTD Collected</p>
           </Card>
 
-          {/* Placeholder cards for collected/outstanding if backend doesn't support yet, or use derived data logic */}
-          <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1 border-l-[6px] border-blue-500">
-            <span className="text-sm text-gray-500">Collected</span>
-            <h2 className="text-[2.1rem] font-bold mt-2 leading-tight">${stats.totalRevenue.toLocaleString('en-CA')}</h2>
-            <p className="mt-2 text-gray-700">Paid rent</p>
+          <Card className="p-6 rounded-[18px] bg-white shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.15)] hover:rotate-1 border-l-[6px] border-indigo-500">
+            <span className="text-sm text-gray-500">Projected Revenue</span>
+            <h2 className="text-[2.1rem] font-bold mt-2 leading-tight">${(stats.projectedRevenue || 0).toLocaleString('en-CA')}</h2>
+            <p className="mt-2 text-gray-700">Active Lease Rent</p>
           </Card>
         </section>
 

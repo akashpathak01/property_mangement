@@ -1,4 +1,5 @@
 const prisma = require('../../config/prisma');
+const { uploadToCloudinary } = require('../../config/cloudinary');
 
 // Helper to calculate status
 const getPolicyStatus = (endDate) => {
@@ -47,15 +48,20 @@ exports.uploadInsurance = async (req, res) => {
         const userId = req.user.id;
         const { provider, policyNumber, startDate, endDate } = req.body;
 
-        // Handle file upload
+        if (!provider || !policyNumber || !startDate || !endDate) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+
+        // Handle file upload using express-fileupload patterns
         let documentUrl = null;
-        if (req.file) {
-            documentUrl = `/uploads/${req.file.filename}`;
+        if (req.files && req.files.file) {
+            const file = req.files.file;
+            const result = await uploadToCloudinary(file.tempFilePath, 'tenant_insurance');
+            documentUrl = result.secure_url;
         }
 
         // According to requirements: "Replace old policy if needed"
-        // We can either find and update or delete and create. 
-        // Let's check for existing first.
         const existing = await prisma.insurance.findFirst({
             where: { userId }
         });
@@ -89,7 +95,7 @@ exports.uploadInsurance = async (req, res) => {
         });
 
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ message: 'Error uploading insurance' });
+        console.error('Error in uploadInsurance:', e);
+        res.status(500).json({ message: 'Error uploading insurance data' });
     }
 };

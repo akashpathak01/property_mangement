@@ -5,11 +5,13 @@ exports.getInsuranceAlerts = async (req, res) => {
     try {
         const today = new Date();
         const insurances = await prisma.insurance.findMany({
-            include: { user: true }
+            include: {
+                user: true
+            }
         });
 
-        // We need Unit info. Insurance is linked to User. User has Leases. Leases have Units.
-        const leases = await prisma.lease.findMany({
+        // Fallback for older records without unitId
+        const activeLeases = await prisma.lease.findMany({
             where: { status: 'Active' },
             include: {
                 unit: {
@@ -19,12 +21,13 @@ exports.getInsuranceAlerts = async (req, res) => {
         });
 
         const userLeaseMap = {};
-        leases.forEach(l => {
+        activeLeases.forEach(l => {
             userLeaseMap[l.tenantId] = l.unit;
         });
 
         const getPolicyStatus = (endDate) => {
             const end = new Date(endDate);
+            const today = new Date();
             const diffTime = end - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -34,7 +37,7 @@ exports.getInsuranceAlerts = async (req, res) => {
         };
 
         const formatted = insurances.map(ins => {
-            const unit = userLeaseMap[ins.userId];
+            const unit = ins.unit || userLeaseMap[ins.userId];
             const status = getPolicyStatus(ins.endDate);
 
             return {
